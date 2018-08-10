@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">BikeDaCity</string>
+    <string name="about_entry">About BikeDaCity</string>
+    <string name="about_dialog_title">About</string>S
+    <string name="devel_title">Developer</string>
+    <string name="devel_name">Giuliano Peraz</string>
+    <string name="devel_email">giuliano.peraz@gmail.com</string>
+    <string name="info_source_title">Information Sources</string>
+    <string name="source_name_1">CityBikes</string>
+    <string name="source_name_2">OSMDroid</string>
+    <string name="source_site_1">citybik.es</string>
+    <string name="source_site_2">github.com/osmdroid/osmdroid/</string>
+
+</resources>
