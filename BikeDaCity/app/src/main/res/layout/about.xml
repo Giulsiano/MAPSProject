@@ -11,41 +11,38 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/dialog_title"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/about_dialog_title"
-        android:textSize="18sp" />
-
-    <TextView
         android:id="@+id/devel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:layout_marginTop="4dp"
         android:onClick="sendEmail"
         android:text="@string/devel_title"
-        android:textSize="16sp"/>
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/devel_name"
-        android:text="@string/devel_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:onClick="sendEmail"
-        android:textSize="10sp"/>
+        android:text="@string/devel_name"
+        android:textSize="10sp" />
 
     <TextView
         android:id="@+id/devel_email"
-        android:text="@string/devel_email"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:onClick="sendEmail"
-        android:textSize="10sp"/>
+        android:text="@string/devel_email"
+        android:textSize="10sp" />
 
     <TextView
         android:id="@+id/info_sources"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:layout_marginTop="8dp"
         android:text="@string/info_source_title"
         android:textSize="18sp" />
@@ -54,32 +51,36 @@
         android:id="@+id/source_name_1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:layout_marginTop="4dp"
         android:text="@string/source_name_1"
         android:textSize="16sp" />
 
     <TextView
         android:id="@+id/source_site_1"
-        android:text="@string/source_site_1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:onClick="openSite"
-        android:textSize="10sp"/>
+        android:text="@string/source_site_1"
+        android:textSize="10sp" />
 
     <TextView
         android:id="@+id/source_name_2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:layout_marginTop="4dp"
         android:text="@string/source_name_2"
         android:textSize="16sp" />
 
     <TextView
         android:id="@+id/source_site_2"
-        android:text="@string/source_site_2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:onClick="openSite"
-        android:textSize="10sp"/>
+        android:text="@string/source_site_2"
+        android:textSize="10sp" />
 
 </LinearLayout>
