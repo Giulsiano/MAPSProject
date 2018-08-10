@@ -63,5 +63,6 @@ public class MainActivity extends AppCompatActivity {
         }
         Intent browserIntent = new Intent(Intent.ACTION_VIEW);
         browserIntent.setData(Uri.parse(url));
+        startActivity(Intent.createChooser(browserIntent, "Open in browser..."));
     }
 }
