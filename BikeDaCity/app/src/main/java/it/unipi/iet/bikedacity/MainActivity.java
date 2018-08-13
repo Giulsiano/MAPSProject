@@ -36,6 +36,10 @@ public class MainActivity extends AppCompatActivity {
                 df.show(getFragmentManager(), "AboutDialog");
                 return true;
 
+            case R.id.settings:
+                startActivityForResult(new Intent(MainActivity.this, SettingsActivity.class), 0);
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
