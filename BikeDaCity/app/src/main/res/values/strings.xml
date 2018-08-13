@@ -10,5 +10,90 @@
     <string name="source_name_2">OSMDroid</string>
     <string name="source_site_1">citybik.es</string>
     <string name="source_site_2">github.com/osmdroid/osmdroid/</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+    <string name="pref_header_general">Settings</string>
+
+    <!-- Location settings -->
+    <string name="pref_location_interval_title">Set interval duration</string>
+    <string-array name="pref_interval_location_entries">
+        <item>5 seconds</item>
+        <item>30 seconds</item>
+        <item>1 minute</item>
+    </string-array>
+    <string-array name="pref_interval_location_values">
+        <item>5</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
+
+    <!-- Map settings -->
+    <string-array name="pref_map_provider_entries">
+        <item>Google Map App</item>
+        <item>Open Street Map App</item>
+        <item>OSMDroid</item>
+    </string-array>
+    <string-array name="pref_map_provider_values">
+        <item>-1</item>
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+
+
+    <!-- Example settings for Data & Sync -->
+    <string name="pref_header_data_sync">Data &amp; sync</string>
+
+    <string name="pref_title_sync_frequency">Sync frequency</string>
+    <string-array name="pref_sync_frequency_titles">
+        <item>15 minutes</item>
+        <item>30 minutes</item>
+        <item>1 hour</item>
+        <item>3 hours</item>
+        <item>6 hours</item>
+        <item>Never</item>
+    </string-array>
+    <string-array name="pref_sync_frequency_values">
+        <item>15</item>
+        <item>30</item>
+        <item>60</item>
+        <item>180</item>
+        <item>360</item>
+        <item>-1</item>
+    </string-array>
+
+    <string-array name="list_preference_entries">
+        <item>Entry 1</item>
+        <item>Entry 2</item>
+        <item>Entry 3</item>
+    </string-array>
+
+    <string-array name="list_preference_entry_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string name="pref_title_system_sync_settings">System sync settings</string>
+    <string name="pref_location_category_name">Location</string>
+    <string name="pref_location_summary">Enable this if you want to request your location when the
+        interval specified is elapsed instead of every time this app is started.</string>
+
+    <string name="pref_title_location">Enable location service</string>
+    <string name="pref_map_category_name">Map Settings</string>
+    <string name="pref_map_provider_title">Map Provider</string>
+    <string name="location_switch_key">location_switch</string>
+    <string name="location_interval_list_key">location_interval_list</string>
+    <string name="map_provider_list_key">map_provider_list_key</string>
+    <string name="location_summary">Currently set to: </string>
+    <string name="google_map_app_summary">Google Map application will be started to show the location
+                                          of the stations</string>
+    <string name="osm_app_summary">Open Street Map application will be started to show the location
+                                          of the stations</string>
+    <string name="osmdroid_app_summary">BikeDaCity will use the OSMDroid library to show the location
+                                          of the stations</string>
+
+
 
 </resources>
