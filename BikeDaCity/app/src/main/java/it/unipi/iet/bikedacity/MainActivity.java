@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.about:
-                DialogFragment df = new MyFragmentDialog();
+                DialogFragment df = new AboutFragmentDialog();
                 df.show(getFragmentManager(), "AboutDialog");
                 return true;
 
