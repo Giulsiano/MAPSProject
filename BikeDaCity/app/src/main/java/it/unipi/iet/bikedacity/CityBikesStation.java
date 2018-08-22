@@ -1,20 +1,22 @@
 package it.unipi.iet.bikedacity;
 
 
+import android.util.Log;
+
 import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class CityBikesStation {
+    private static final String TAG = "CityBikesStation";
     private String name;
     private DateTime timestamp;
     private double longitude;
     private double latitude;
     private int freeBikes;
     private int emptySlots;
-    private String city;
     private String description;
-    private boolean isOnline;
+    private Boolean isOnline;
 
     public CityBikesStation(JSONObject jsonObject) throws JSONException {
         name = jsonObject.getString("name");
@@ -51,10 +53,6 @@ public class CityBikesStation {
 
     public int getEmptySlots () {
         return emptySlots;
-    }
-
-    public String getCity () {
-        return city;
     }
 
     public String getDescription () {
