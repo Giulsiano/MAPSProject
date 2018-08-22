@@ -10,6 +10,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -84,5 +86,10 @@ public class CityBikesDownloader {
         return jsonNetworks;
     }
 
-    public
+    public List<CityBikesStation> getStationsOf(String city){
+        if ("".equals(city) || city == null) return null;
+
+        List<CityBikesStation> stations = null;
+        return stations;
+    }
 }
