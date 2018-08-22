@@ -24,10 +24,17 @@ public class CityBikesStation {
         latitude = jsonObject.getDouble("latitude");
         freeBikes = jsonObject.getInt("free_bikes");
         emptySlots = jsonObject.getInt("empty_slots");
-        city = jsonObject.getString("city");
-        JSONObject extra = (JSONObject) jsonObject.get("extra");
-        description = extra.getString("description");
-        isOnline = "online".equals(extra.getString("status")) ? true : false;
+        JSONObject extra;
+        try {
+            extra = (JSONObject) jsonObject.get("extra");
+            description = extra.getString("description");
+            isOnline = "online".equals(extra.getString("status"));
+        }
+        catch (JSONException e){
+            Log.w(TAG, "Station " + name + " don't have an extra field");
+            description = null;
+            isOnline = null;
+        }
         timestamp = new DateTime(jsonObject.getString("timestamp"));
     }
 
