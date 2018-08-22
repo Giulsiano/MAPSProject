@@ -9,8 +9,9 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -21,17 +22,17 @@ public class CityBikesDownloader {
     //storage
     //
     private static final String TAG = "CityBikeDownloader";
-    public static final String CITYBIKESURL = "https://api.citybik.es/v2/networks/";
+    public static final String CITYBIKESAPIURL = "https://api.citybik.es";
+    public static final String NETWORKSENDPOINT = "/v2/networks/";
     private JSONArray jsonNetworks;
 
     public CityBikesDownloader(){
-        jsonNetworks = new JSONArray();
     }
 
-    private String downloadFilteredJSON (String filter){
-        StringBuilder stringBuilder = new StringBuilder();
+    private String downloadContentFrom (String url){
+        StringBuilder content = new StringBuilder();
         try {
-            URL site = new URL(CITYBIKESURL + filter);
+            URL site = new URL(url);
             HttpsURLConnection connection = (HttpsURLConnection) site.openConnection();
             connection.setRequestMethod("GET");
             connection.connect();
@@ -43,7 +44,7 @@ public class CityBikesDownloader {
                     BufferedReader reader = new BufferedReader(is);
                     String line;
                     while ((line = reader.readLine()) != null){
-                        stringBuilder.append(line);
+                        content.append(line);
                     }
                     reader.close();
                 }
@@ -59,34 +60,51 @@ public class CityBikesDownloader {
             }
             connection.disconnect();
         }
-        catch (IOException e) {
-            Log.e(TAG, e.getLocalizedMessage());
+        catch (MalformedURLException e){
+            Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
+            Log.e(TAG, "URL used: " + url);
         }
-        return stringBuilder.toString().replaceAll("\\s+", "");
+        catch (IOException e) {
+            Log.e(TAG, "Exception " + e.getClass().getSimpleName() + ". Message: " + e
+                    .getMessage());
+        }
+        return content.toString();
     }
 
-    public String downloadNetworksJSON (){
-        return downloadFilteredJSON("");
+    private JSONObject downloadFilteredJSON (String filter) throws JSONException {
+        String content = downloadContentFrom(CITYBIKESAPIURL + NETWORKSENDPOINT + filter);
+        return new JSONObject(content);
+    }
+
+    private JSONObject downloadNetworksJSON (){
+        try {
+            return downloadFilteredJSON("");
+        }
+        catch (JSONException e) {
+            Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
+            return null;
+        }
     }
 
     public JSONArray getNetworks (){
-        String jsonString = downloadNetworksJSON();
-
-        // in case of errors downloadNetworksJSON will return an empty string
-        if (!"".equals(jsonString)){
+        JSONObject cityBikesJSON = downloadNetworksJSON();
+        if (cityBikesJSON == null){
+            Log.e(TAG, "Error on downloading JSON networks from " + CITYBIKESAPIURL);
+            jsonNetworks = new JSONArray();
+        }
+        else {
             try {
-                JSONObject wholeJson = new JSONObject(jsonString);
-                jsonNetworks = wholeJson.getJSONArray("networks");
+                jsonNetworks = cityBikesJSON.getJSONArray("networks");
             }
             catch (JSONException e) {
-                Log.e(TAG, "JSONException " + e.getLocalizedMessage());
+                Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
                 jsonNetworks = new JSONArray();
             }
         }
         return jsonNetworks;
     }
 
-    public List<CityBikesStation> getStationsOf(String city){
+    public List<CityBikesStation> getStationsOf (String city) {
         if ("".equals(city) || city == null) return null;
 
         List<CityBikesStation> stations = null;
