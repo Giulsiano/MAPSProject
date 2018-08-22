@@ -106,8 +106,40 @@ public class CityBikesDownloader {
 
     public List<CityBikesStation> getStationsOf (String city) {
         if ("".equals(city) || city == null) return null;
+        List<CityBikesStation> stations = new LinkedList<>();
+        String href = null;
+        JSONArray networks = getNetworks();
+        JSONObject location, network;
+        for (int i = 0; i < networks.length(); ++i){
+            try {
+                network = networks.getJSONObject(i);
+                location = network.getJSONObject("location");
+                String networkCity = location.getString("city");
+                if (city.equals(networkCity)) {
+                    href = network.getString("href");
+                    break;
+                }
+            }
+            catch (JSONException e) {
+                Log.e(TAG, e.getMessage());
+            }
+        }
+        if (href == null) {
+            Log.w(TAG, "City isn't in the list of Citybikes");
+            return stations;
+        }
+        try {
+            JSONObject cityStations = new JSONObject(downloadContentFrom(CITYBIKESAPIURL + href));
+            JSONArray jsonStations = cityStations.getJSONObject("network")
+                                                 .getJSONArray("stations");
 
-        List<CityBikesStation> stations = null;
+            for (int i = 0; i < jsonStations.length(); ++i){
+                stations.add(new CityBikesStation(jsonStations.getJSONObject(i)));
+            }
+        }
+        catch (JSONException e) {
+            Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
         return stations;
     }
 }
