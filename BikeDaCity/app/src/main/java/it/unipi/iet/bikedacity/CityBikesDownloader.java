@@ -132,7 +132,6 @@ public class CityBikesDownloader {
             JSONObject cityStations = new JSONObject(downloadContentFrom(CITYBIKESAPIURL + href));
             JSONArray jsonStations = cityStations.getJSONObject("network")
                                                  .getJSONArray("stations");
-
             for (int i = 0; i < jsonStations.length(); ++i){
                 stations.add(new CityBikesStation(jsonStations.getJSONObject(i)));
             }
