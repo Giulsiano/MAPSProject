@@ -25,10 +25,10 @@ public class CityBikesStation {
     private Boolean isOnline;
 
     public enum Availability {
-        NO,
-        LOW,
-        MEDIUM,
         HIGH,
+        MEDIUM,
+        LOW,
+        NO,
     }
 
     private Availability freePlacesLevel;
