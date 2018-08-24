@@ -2,11 +2,14 @@ package it.unipi.iet.bikedacity;
 
 
 import android.location.Location;
+import android.location.LocationManager;
 import android.util.Log;
 
 import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Comparator;
 
 public class CityBikesStation {
 
@@ -21,31 +24,29 @@ public class CityBikesStation {
     private String description;
     private Boolean isOnline;
 
-    public enum Status {
-        NO_FREE,
-        NO_AVAILABLE,
-        LOW_FREE,
-        LOW_AVAILABLE,
-        MEDIUM_FREE,
-        MEDIUM_AVAILABLE,
-        HIGH_FREE,
-        HIGH_AVAILABLE
+    public enum Availability {
+        NO,
+        LOW,
+        MEDIUM,
+        HIGH,
     }
 
-    private Status freeStatus;
-    private Status availableStatus;
+    private Availability freePlacesLevel;
+    private Availability availableBikesLevel;
 
     public CityBikesStation(JSONObject jsonObject) throws JSONException {
         name = jsonObject.getString("name");
         double longitude = jsonObject.getDouble("longitude");
         double latitude = jsonObject.getDouble("latitude");
-        location = new Location("CityBikes");
+        location = new Location(LocationManager.GPS_PROVIDER);
         location.setLongitude(longitude);
         location.setLatitude(latitude);
+        location.setAccuracy(0.0f);
         freeBikes = jsonObject.getInt("free_bikes");
         emptySlots = jsonObject.getInt("empty_slots");
         lowThreshold = Math.min(2, (freeBikes + emptySlots) >> 3);
         mediumThreshold = Math.min(4, (freeBikes + emptySlots) >> 2);
+
         JSONObject extra;
         try {
             extra = (JSONObject) jsonObject.get("extra");
@@ -60,36 +61,43 @@ public class CityBikesStation {
         timestamp = new DateTime(jsonObject.getString("timestamp"));
     }
 
-    public Status getFreeStatus () {
-        if (freeBikes == 0){
-            freeStatus = Status.NO_FREE;
+    public static Comparator<CityBikesStation> FreePlaceComparator = new
+            Comparator<CityBikesStation>(){
+
+        @Override
+        public int compare (CityBikesStation o1, CityBikesStation o2) {
+            return o1.freePlacesLevel.compareTo(o2.getFreePlacesLevel());
         }
-        else if (freeBikes <= lowThreshold){
-            freeStatus = Status.LOW_FREE;
+    };
+
+    public static Comparator<CityBikesStation> AvailableBikesComparator = new Comparator<CityBikesStation>() {
+        @Override
+        public int compare (CityBikesStation o1, CityBikesStation o2) {
+            return o1.availableBikesLevel.compareTo(o2.getAvailableBikesLevel());
         }
-        else if (freeBikes <= mediumThreshold){
-            freeStatus = Status.MEDIUM_FREE;
+    };
+
+    private Availability getLevelOf (int criteria){
+        if (criteria == 0){
+            return Availability.NO;
         }
-        else {
-            freeStatus = Status.HIGH_FREE;
+        if (criteria <= lowThreshold){
+            return Availability.LOW;
         }
-        return freeStatus;
+        if (criteria <= mediumThreshold){
+            return Availability.MEDIUM;
+        }
+        else return Availability.HIGH;
     }
 
-    public Status getAvailableStatus () {
-        if (emptySlots == 0){
-            availableStatus = Status.NO_AVAILABLE;
-        }
-        else if (emptySlots <= lowThreshold){
-            availableStatus = Status.LOW_AVAILABLE;
-        }
-        else if (emptySlots <= mediumThreshold){
-            availableStatus = Status.MEDIUM_AVAILABLE;
-        }
-        else {
-            availableStatus = Status.HIGH_AVAILABLE;
-        }
-        return availableStatus;
+    public Availability getAvailableBikesLevel () {
+        availableBikesLevel = getLevelOf(freeBikes);
+        return availableBikesLevel;
+    }
+
+    public Availability getFreePlacesLevel () {
+        freePlacesLevel = getLevelOf(emptySlots);
+        return freePlacesLevel;
     }
 
     public String getName () {
