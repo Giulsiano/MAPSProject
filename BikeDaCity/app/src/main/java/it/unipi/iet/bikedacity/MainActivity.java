@@ -1,18 +1,48 @@
 package it.unipi.iet.bikedacity;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.app.DialogFragment;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 
-public class MainActivity extends AppCompatActivity {
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.views.MapView;
+
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity implements
+        ActivityCompat.OnRequestPermissionsResultCallback, LocationListener {
 
     static final String TAG = "MainActivity";
+    private MapView cityMap;
+    private CitybikesManager citybikesManager;
+    private LocationManager locationManager;
+    private Location currentLocation;
+    private boolean permissionOk;
+
+    private static final int REQUEST_PERMISSIONS = 0;
+    private static final long OLD_THRESHOLD = 1*60*1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,5 +98,25 @@ public class MainActivity extends AppCompatActivity {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW);
         browserIntent.setData(Uri.parse(url));
         startActivity(Intent.createChooser(browserIntent, "Open in browser..."));
+    }
+
+    @Override
+    public void onLocationChanged (Location location) {
+        currentLocation = location;
+    }
+
+    @Override
+    public void onStatusChanged (String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled (String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled (String provider) {
+
     }
 }
