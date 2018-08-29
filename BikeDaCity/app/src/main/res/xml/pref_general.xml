@@ -24,7 +24,7 @@
         android:title="@string/pref_map_category_name"
         android:key="pref_map_category_key">
         <ListPreference
-            android:defaultValue="-1"
+            android:defaultValue="1"
             android:entries="@array/pref_map_provider_entries"
             android:entryValues="@array/pref_map_provider_values"
             android:key="@string/map_provider_list_key"
