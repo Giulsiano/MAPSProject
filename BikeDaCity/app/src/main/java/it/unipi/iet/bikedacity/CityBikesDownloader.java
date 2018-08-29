@@ -82,43 +82,19 @@ public class CityBikesDownloader {
         return content.toString();
     }
 
-    private JSONObject downloadFilteredJSON (String filter) throws JSONException {
-        String content = downloadContentFrom(CITYBIKESAPIURL + NETWORKSENDPOINT + filter);
-        return new JSONObject(content);
-    }
-
-    /**
-     * Downloads the citybikes network json
-     * @return The JSON from citybik.es or null if an error has occourred.
-     */
-    private JSONObject downloadNetworksJSON (){
-        final String url = CITYBIKESAPIURL + NETWORKSENDPOINT;
-        try {
-            return new JSONObject(downloadContentFrom(url));
-        }
-        catch (JSONException e) {
-            Log.e(TAG, "Error downloading networks JSON from " + url + ".\n" +
-                    e.getClass().getSimpleName() + ": " + e.getMessage());
-            return null;
-        }
-    }
-
     /**
      * THis method downloads the JSON from citybikes and return only the array of the
      * networks known by the site. It filters out useless information.
      * @return  A JSONArray with all the networks of citybikes or null if an error has occourred
      */
     public JSONArray getNetworks (){
-        JSONObject cityBikesJSON = downloadNetworksJSON();
-        if (cityBikesJSON == null){
-            Log.e(TAG, "Error on downloading JSON networks from " + CITYBIKESAPIURL);
-            return null;
-        }
-        else {
+        if (jsonNetworks == null || jsonNetworks.length() == 0){
+            final String url = CITYBIKESAPIURL + NETWORKSENDPOINT;
             try {
+                JSONObject cityBikesJSON = new JSONObject(downloadContentFrom(url));
                 jsonNetworks = cityBikesJSON.getJSONArray("networks");
             }
-            catch (JSONException e) {
+            catch (JSONException e){
                 Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
                 jsonNetworks = null;
             }
@@ -133,8 +109,8 @@ public class CityBikesDownloader {
      * @return A list of stations which is empty if the city doesn't have any station.
      */
     public List<CityBikesStation> getStationsOf (String city) {
-        if ("".equals(city) || city == null) return null;
         List<CityBikesStation> stations = new LinkedList<>();
+        if ("".equals(city) || city == null) return stations;
         String networkEndpoint = null;
         JSONArray networks = getNetworks();
         if (networks == null){
@@ -153,7 +129,7 @@ public class CityBikesDownloader {
                 }
             }
             catch (JSONException e) {
-                Log.e(TAG, e.getMessage());
+                Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
             }
         }
         if (networkEndpoint == null) {

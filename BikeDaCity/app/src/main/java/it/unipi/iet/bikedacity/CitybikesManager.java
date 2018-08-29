@@ -1,5 +1,6 @@
 package it.unipi.iet.bikedacity;
 
+import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
@@ -13,8 +14,11 @@ import java.util.TreeMap;
 public class CitybikesManager {
     private static String TAG = "CitybikesManager";
     private CityBikesDownloader downloader;
+    private Context context;
     private String city;
+    private List<CityBikesStation> stations;
 
+    // TODO add storing networks' JSON to a file
     public CitybikesManager (){
         downloader = new CityBikesDownloader();
         city = null;
@@ -30,15 +34,17 @@ public class CitybikesManager {
     }
 
     public void setCity (String c) {
-        city = new String(c);
+        city = c;
     }
 
     private Map<Float, List<CityBikesStation>> getStationsOrderedByDistanceFrom (Location location){
         // Use a TreeMap that implements SortedMap interface to automatically obtain an ordered map
         float distance;
         Map<Float, List<CityBikesStation>> distanceMap = new TreeMap<>();
-        List<CityBikesStation> cityStations = downloader.getStationsOf(city);
-        for (CityBikesStation station : cityStations){
+        if (stations == null){
+            stations = downloader.getStationsOf(city);
+        }
+        for (CityBikesStation station : stations){
             distance = location.distanceTo(station.getLocation());
             if (distanceMap.containsKey(distance)){
                 List<CityBikesStation> stationList = distanceMap.get(distance);
