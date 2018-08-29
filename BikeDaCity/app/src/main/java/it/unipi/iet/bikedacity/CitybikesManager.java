@@ -29,6 +29,10 @@ public class CitybikesManager {
         return city;
     }
 
+    public void setCity (String c) {
+        city = new String(c);
+    }
+
     private Map<Float, List<CityBikesStation>> getStationsOrderedByDistanceFrom (Location location){
         // Use a TreeMap that implements SortedMap interface to automatically obtain an ordered map
         float distance;
@@ -58,12 +62,20 @@ public class CitybikesManager {
         if (city == null){
             throw new NullPointerException("City is null");
         }
-
-        Map<Float, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
-        Collection<List<CityBikesStation>> mapValues = distanceMap.values();
-        for (List<CityBikesStation> stations : mapValues){
+        // Order the station by their free place availability
+        TreeMap<Float, List<CityBikesStation>> distanceMap = (TreeMap)
+                getStationsOrderedByDistanceFrom(location);
+        Collection<Float> mapDistances = distanceMap.keySet();
+        for (Float distance : mapDistances){
+            List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.FreePlaceComparator);
+
+            // Prune the map by removing no free place stations
+            if (stations.get(0).getFreePlacesLevel() == CityBikesStation.Availability.NO){
+                mapDistances.remove(distance);
+            }
         }
+
         return distanceMap;
     }
 
@@ -75,12 +87,20 @@ public class CitybikesManager {
         if (city == null){
             throw new NullPointerException("City is null");
         }
-
-        Map<Float, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
-        Collection<List<CityBikesStation>> mapValues = distanceMap.values();
-        for (List<CityBikesStation> stations : mapValues){
+        // Order the station by their free place availability
+        TreeMap<Float, List<CityBikesStation>> distanceMap = (TreeMap)
+                getStationsOrderedByDistanceFrom(location);
+        Collection<Float> mapDistances = distanceMap.keySet();
+        for (Float distance : mapDistances){
+            List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.AvailableBikesComparator);
+
+            // Prune the map by removing no available bikes stations
+            if (stations.get(0).getAvailableBikesLevel() == CityBikesStation.Availability.NO){
+                mapDistances.remove(distance);
+            }
         }
+
         return distanceMap;
     }
 }
