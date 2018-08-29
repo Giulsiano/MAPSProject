@@ -47,7 +47,91 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
+        // If permissions have not been granted ask the user to do that
+        if (isExternalStorageAvailable()){
+            // Initialize the map
+            Context ctx = getApplicationContext();
+            Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+            setContentView(R.layout.activity_main);
+            cityMap = findViewById(R.id.map);
+            cityMap.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
+            cityMap.setBuiltInZoomControls(true);
+            cityMap.setMultiTouchControls(true);
+            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            permissionOk = false;
+        }
+        else {
+            AlertDialog errorAlert = createAlertDialogWithPositiveButtonOnly(
+                    R.string.err_dialog_no_ext_storage_title,
+                    R.string.err_dialog_no_ext_storage_message,
+                    R.string.err_dialog_no_ext_storage_button,
+                    new DialogInterface.OnClickListener(){
+                        @Override
+                        public void onClick (DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
+            errorAlert.show();
+        }
+    }
+
+    private AlertDialog createAlertDialogWithPositiveButtonOnly (int title,
+                                                                 int message,
+                                                                 int buttonText,
+                                                                 DialogInterface.OnClickListener listener){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setPositiveButton(buttonText, listener);
+        return builder.create();
+    }
+
+    private AlertDialog createAlertDialogWithTwoButton (int title,
+                                                        int message,
+                                                        int positiveButtonText,
+                                                        int negativeButtonText,
+                                                        DialogInterface.OnClickListener positiveListener,
+                                                        DialogInterface.OnClickListener negativeListener){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setPositiveButton(positiveButtonText, positiveListener);
+        builder.setNegativeButton(negativeButtonText, negativeListener);
+        return builder.create();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_PERMISSIONS) {
+            if (grantResults.length == 2 && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                // Camera permission has been granted, preview can be displayed
+                this.permissionOk = true;
+            }
+            else {
+                AlertDialog errorDialog = createAlertDialogWithPositiveButtonOnly(
+                        R.string.err_dialog_perm_not_granted_title,
+                        R.string.err_dialog_perm_not_granted_message,
+                        R.string.err_dialog_perm_not_granted_button,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick (DialogInterface dialog, int which) {
+                                finish();
+                            }
+                        }
+                );
+                errorDialog.show();
+            }
+        }
+        else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    private boolean isExternalStorageAvailable() {
+        return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
     }
 
     @Override
@@ -56,6 +140,138 @@ public class MainActivity extends AppCompatActivity implements
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.mainmenu, menu);
         return true;
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+
+        // Request permission for this app to work properly
+        permissionOk = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        permissionOk &= ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED;
+        if (!permissionOk) {
+            Log.i(TAG, "Request permissions to the user");
+            final AppCompatActivity mainActivity = this;
+            AlertDialog permissionDialog = createAlertDialogWithPositiveButtonOnly(
+                    R.string.perm_dialog_title,
+                    R.string.perm_dialog_message,
+                    R.string.perm_dialog_button,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick (DialogInterface dialog, int which) {
+                            String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                                                                Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                            ActivityCompat.requestPermissions(mainActivity, permissions, REQUEST_PERMISSIONS);
+                        }
+            });
+            permissionDialog.show();
+        }
+        else {
+            Log.i(TAG, "App has the right permissions granted");
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if (isCurrentLocationOlderThan(OLD_THRESHOLD)){
+                    Log.i(TAG, "Current location is too old. Request a new one");
+                    locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER,
+                            this,
+                            null);
+                }
+            }
+            else {
+                Log.w(TAG, "Request the user to enable the GPS provider");
+                AlertDialog enableGPS = createAlertDialogWithTwoButton(
+                        R.string.enable_provider_title,
+                        R.string.enable_provider_message,
+                        R.string.enable_provider_positive_button,
+                        R.string.enable_provider_negative_button,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick (DialogInterface dialog, int which) {
+                                startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+                            }
+                        },
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick (DialogInterface dialog, int which) {
+                                finish();
+                            }
+                        }
+                );
+                enableGPS.show();
+                // TODO AlertDialog + open gps provider page to enable it
+            }
+        }
+    }
+
+    private boolean isCurrentLocationOlderThan (long time){
+        return currentLocation == null || Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > time;
+    }
+
+    @Override
+    public void onResume (){
+        super.onResume();
+        cityMap.onResume();
+        if (currentLocation == null){
+            Log.i(TAG, "Current location is null. Require new location if known");
+            try {
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                    Log.i(TAG, LocationManager.GPS_PROVIDER + " is enabled");
+                    currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    if (isCurrentLocationOlderThan(OLD_THRESHOLD)){
+                        Log.i(TAG, "Current location is too old. Request a new one");
+                        Criteria criteria = new Criteria();
+                        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+                        List<String> providers = locationManager.getProviders(criteria, true);
+                        if (providers.isEmpty() || !providers.contains(LocationManager.GPS_PROVIDER)){
+                            Log.w(TAG, "No providers satisfy criteria found");
+
+                        }
+                        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER,
+                                this,
+                                null);
+                    }
+                }
+                else {
+                    Log.w(TAG, "GPS is not enabled");
+                    AlertDialog enableGPS = createAlertDialogWithTwoButton(
+                            R.string.enable_provider_title,
+                            R.string.enable_provider_message,
+                            R.string.enable_provider_positive_button,
+                            R.string.enable_provider_negative_button,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick (DialogInterface dialog, int which) {
+                                    startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+                                }
+                            },
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick (DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            }
+                    );
+                    enableGPS.show();
+                }
+            }
+            catch (SecurityException e){
+                Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
+            }
+        }
+        else {
+            // TODO Asyn tasks for downloading the Json
+        }
+
+    }
+
+    @Override
+    public void onPause (){
+        Log.d(TAG, "onPause() Called");
+        super.onPause();
+        cityMap.onPause();
+        locationManager.removeUpdates(this);
     }
 
     @Override

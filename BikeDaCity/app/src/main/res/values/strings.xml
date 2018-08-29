@@ -97,8 +97,39 @@
     <string name="map_refresh_summary">Enable this for autorefreshing the map</string>
     <string name="default_view_summary">Select the view you use more frequently</string>
 
-    <!-- URL -->
-    <string name="citybikes_url"></string>
+    <!-- URLs -->
+    <string name="nominatim_service_query">https://nominatim.openstreetmap.org/reverse?format=json
+    </string>
 
+    <!-- Alert Dialog error strings -->
+    <string name="err_dialog_no_ext_storage_title">ERROR!</string>
+    <string name="err_dialog_no_ext_storage_message">Without eternal storage this app can\'t work</string>
+    <string name="err_dialog_no_ext_storage_button">Exit</string>
+    <string name="err_dialog_perm_not_granted_title">Exiting application</string>
+    <string name="err_dialog_perm_not_granted_message">The application can\'t run without accessing
+    your location and without writing to the external storage. Please reconsider to grant it access.</string>
+    <string name="err_dialog_perm_not_granted_button">Exit</string>
+
+
+    <!-- Alert dialog for permissions rationale -->
+    <string name="perm_dialog_title">Why Permissions?</string>
+    <string name="perm_dialog_message">This app will use GPS location for knowing
+        which are the nearest stations to you. This app will also request you to allow writing
+        external storage. It is requested by Open Street Map to store locally the map tiles,
+        avoiding them being downloaded from internet each time this app is run.
+    </string>
+    <string name="perm_dialog_button">Ok, I read</string>
+
+    <!-- Alert dialog for enabling provider-->
+    <string name="enable_provider_title">Enable GPS</string>
+    <string name="enable_provider_message">Please enable the GPS provider for letting this app to work
+    properly.</string>
+    <string name="enable_provider_positive_button">Enable GPS</string>
+    <string name="enable_provider_negative_button">Exit app</string>
+
+
+    <!-- Exceptions messages -->
+    <string name="no_provider_enabled">No provider has been enabled</string>
+    <string name="no_gps_provider_enabled">GPS has to be enabled</string>
 
 </resources>
