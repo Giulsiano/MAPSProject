@@ -6,6 +6,7 @@ import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -40,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements
     private LocationManager locationManager;
     private Location currentLocation;
     private boolean permissionOk;
+    private boolean showAvailablePlaces;
 
     private static final int REQUEST_PERMISSIONS = 0;
     private static final long OLD_THRESHOLD = 1*60*1000;
@@ -60,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements
             cityMap.setMultiTouchControls(true);
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
             permissionOk = false;
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            showAvailablePlaces = sp.getBoolean(getResources().getString(R.string.map_default_view_list_key),
+                                       true);
         }
         else {
             AlertDialog errorAlert = createAlertDialogWithPositiveButtonOnly(
@@ -152,25 +157,14 @@ public class MainActivity extends AppCompatActivity implements
         permissionOk &= ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED;
         if (!permissionOk) {
-            Log.i(TAG, "Request permissions to the user");
-            final AppCompatActivity mainActivity = this;
-            AlertDialog permissionDialog = createAlertDialogWithPositiveButtonOnly(
-                    R.string.perm_dialog_title,
-                    R.string.perm_dialog_message,
-                    R.string.perm_dialog_button,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick (DialogInterface dialog, int which) {
-                            String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                                                                Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                            ActivityCompat.requestPermissions(mainActivity, permissions, REQUEST_PERMISSIONS);
-                        }
-            });
-            permissionDialog.show();
+            dealWithPermissions();
         }
         else {
             Log.i(TAG, "App has the right permissions granted");
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                requestEnablingProvider();
+            }
+            else {
                 currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 if (isCurrentLocationOlderThan(OLD_THRESHOLD)){
                     Log.i(TAG, "Current location is too old. Request a new one");
@@ -179,29 +173,6 @@ public class MainActivity extends AppCompatActivity implements
                             null);
                 }
             }
-            else {
-                Log.w(TAG, "Request the user to enable the GPS provider");
-                AlertDialog enableGPS = createAlertDialogWithTwoButton(
-                        R.string.enable_provider_title,
-                        R.string.enable_provider_message,
-                        R.string.enable_provider_positive_button,
-                        R.string.enable_provider_negative_button,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick (DialogInterface dialog, int which) {
-                                startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
-                            }
-                        },
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick (DialogInterface dialog, int which) {
-                                finish();
-                            }
-                        }
-                );
-                enableGPS.show();
-                // TODO AlertDialog + open gps provider page to enable it
-            }
         }
     }
 
@@ -209,10 +180,53 @@ public class MainActivity extends AppCompatActivity implements
         return currentLocation == null || Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > time;
     }
 
+    private void dealWithPermissions(){
+        Log.i(TAG, "Request permissions to the user");
+        final AppCompatActivity mainActivity = this;
+        AlertDialog permissionDialog = createAlertDialogWithPositiveButtonOnly(
+                R.string.perm_dialog_title,
+                R.string.perm_dialog_message,
+                R.string.perm_dialog_button,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick (DialogInterface dialog, int which) {
+                        String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                        ActivityCompat.requestPermissions(mainActivity, permissions, REQUEST_PERMISSIONS);
+                    }
+                });
+        permissionDialog.show();
+    }
+
+    private void requestEnablingProvider (){
+        Log.w(TAG, "Request the user to enable the GPS provider");
+        AlertDialog enableGPS = createAlertDialogWithTwoButton(
+                R.string.enable_provider_title,
+                R.string.enable_provider_message,
+                R.string.enable_provider_positive_button,
+                R.string.enable_provider_negative_button,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick (DialogInterface dialog, int which) {
+                        startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+                    }
+                },
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick (DialogInterface dialog, int which) {
+                        finish();
+                    }
+                }
+        );
+        enableGPS.show();
+    }
+
     @Override
     public void onResume (){
         super.onResume();
         cityMap.onResume();
+
+        // TODO move the following code to onStart() method
         if (currentLocation == null){
             Log.i(TAG, "Current location is null. Require new location if known");
             try {
@@ -235,25 +249,7 @@ public class MainActivity extends AppCompatActivity implements
                 }
                 else {
                     Log.w(TAG, "GPS is not enabled");
-                    AlertDialog enableGPS = createAlertDialogWithTwoButton(
-                            R.string.enable_provider_title,
-                            R.string.enable_provider_message,
-                            R.string.enable_provider_positive_button,
-                            R.string.enable_provider_negative_button,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick (DialogInterface dialog, int which) {
-                                    startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
-                                }
-                            },
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick (DialogInterface dialog, int which) {
-                                    finish();
-                                }
-                            }
-                    );
-                    enableGPS.show();
+                    requestEnablingProvider();
                 }
             }
             catch (SecurityException e){
@@ -261,7 +257,8 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         else {
-            // TODO Asyn tasks for downloading the Json
+            /* TODO redraw the stations?
+             */
         }
 
     }
@@ -319,6 +316,12 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onLocationChanged (Location location) {
         currentLocation = location;
+        if (citybikesManager == null){
+            String city = OSMNominatimService.getCityFrom(location.getLatitude(), location.getLongitude());
+            citybikesManager = new CitybikesManager(city);
+        }
+        
+
     }
 
     @Override
