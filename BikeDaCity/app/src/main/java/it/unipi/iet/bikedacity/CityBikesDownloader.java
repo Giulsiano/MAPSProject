@@ -29,6 +29,17 @@ public class CityBikesDownloader {
     public CityBikesDownloader(){
     }
 
+    /**
+     * Download the content from the URL passed by parameter. It manages HTTP 200 response
+     * code cases only, if the HTTP service returns something different this method returns an
+     * empty string.
+     * The method behaves like an HTTP client so will return the raw content the HTTP service
+     * returns, in particular case it has been designed to return a String that contains raw
+     * JSON.
+     * @param url   Which is the resource to download from
+     * @return  A String representing the content or an empty string in case of errors. The format
+     * expected is JSON.
+     */
     private String downloadContentFrom (String url){
         StringBuilder content = new StringBuilder();
         try {
@@ -76,21 +87,32 @@ public class CityBikesDownloader {
         return new JSONObject(content);
     }
 
+    /**
+     * Downloads the citybikes network json
+     * @return The JSON from citybik.es or null if an error has occourred.
+     */
     private JSONObject downloadNetworksJSON (){
+        final String url = CITYBIKESAPIURL + NETWORKSENDPOINT;
         try {
-            return downloadFilteredJSON("");
+            return new JSONObject(downloadContentFrom(url));
         }
         catch (JSONException e) {
-            Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
+            Log.e(TAG, "Error downloading networks JSON from " + url + ".\n" +
+                    e.getClass().getSimpleName() + ": " + e.getMessage());
             return null;
         }
     }
 
+    /**
+     * THis method downloads the JSON from citybikes and return only the array of the
+     * networks known by the site. It filters out useless information.
+     * @return  A JSONArray with all the networks of citybikes or null if an error has occourred
+     */
     public JSONArray getNetworks (){
         JSONObject cityBikesJSON = downloadNetworksJSON();
         if (cityBikesJSON == null){
             Log.e(TAG, "Error on downloading JSON networks from " + CITYBIKESAPIURL);
-            jsonNetworks = new JSONArray();
+            return null;
         }
         else {
             try {
@@ -98,17 +120,27 @@ public class CityBikesDownloader {
             }
             catch (JSONException e) {
                 Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
-                jsonNetworks = new JSONArray();
+                jsonNetworks = null;
             }
         }
         return jsonNetworks;
     }
 
+    /**
+     * Returns the list of all the stations belonging to the city. If no stations are present into
+     * the city then the list is empty.
+     * @param city The city to query the stations from
+     * @return A list of stations which is empty if the city doesn't have any station.
+     */
     public List<CityBikesStation> getStationsOf (String city) {
         if ("".equals(city) || city == null) return null;
         List<CityBikesStation> stations = new LinkedList<>();
-        String href = null;
+        String networkEndpoint = null;
         JSONArray networks = getNetworks();
+        if (networks == null){
+            Log.w(TAG, "Error retrieving network information for "+ city);
+            return stations;
+        }
         JSONObject location, network;
         for (int i = 0; i < networks.length(); ++i){
             try {
@@ -116,7 +148,7 @@ public class CityBikesDownloader {
                 location = network.getJSONObject("location");
                 String networkCity = location.getString("city");
                 if (city.equals(networkCity)) {
-                    href = network.getString("href");
+                    networkEndpoint = network.getString("href");
                     break;
                 }
             }
@@ -124,12 +156,12 @@ public class CityBikesDownloader {
                 Log.e(TAG, e.getMessage());
             }
         }
-        if (href == null) {
+        if (networkEndpoint == null) {
             Log.w(TAG, "City isn't in the list of Citybikes");
             return stations;
         }
         try {
-            JSONObject cityStations = new JSONObject(downloadContentFrom(CITYBIKESAPIURL + href));
+            JSONObject cityStations = new JSONObject(downloadContentFrom(CITYBIKESAPIURL + networkEndpoint));
             JSONArray jsonStations = cityStations.getJSONObject("network")
                                                  .getJSONArray("stations");
             for (int i = 0; i < jsonStations.length(); ++i){
