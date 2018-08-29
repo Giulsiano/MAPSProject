@@ -49,7 +49,7 @@
             android:dependency="@string/map_refresh_switch_key"/>
 
         <ListPreference
-            android:defaultValue="2"
+            android:defaultValue="0"
             android:entries="@array/pref_default_view_entries"
             android:entryValues="@array/pref_default_view_values"
             android:key="@string/map_default_view_list_key"

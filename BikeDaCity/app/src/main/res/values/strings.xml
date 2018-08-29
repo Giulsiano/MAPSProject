@@ -48,8 +48,8 @@
     </string-array>
 
     <string-array name="pref_default_view_entries">
-        <item>Available place</item>
-        <item>Free bike</item>
+        <item>Available places</item>
+        <item>Free bikes</item>
     </string-array>
     <string-array name="pref_default_view_values">
         <item>0</item>
