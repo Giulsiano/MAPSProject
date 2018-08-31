@@ -118,7 +118,7 @@
         external storage. It is requested by Open Street Map to store locally the map tiles,
         avoiding them being downloaded from internet each time this app is run.
     </string>
-    <string name="perm_dialog_button">Ok, I read</string>
+    <string name="perm_dialog_button">OK, I read</string>
 
     <!-- Alert dialog for enabling provider-->
     <string name="enable_provider_title">Enable GPS</string>
@@ -131,5 +131,11 @@
     <!-- Exceptions messages -->
     <string name="no_provider_enabled">No provider has been enabled</string>
     <string name="no_gps_provider_enabled">GPS has to be enabled</string>
+
+    <!-- Information for the information box -->
+    <string name="infobox_request_city">Finding city&#8230;</string>
+    <string name="infobox_station_ordered">Compute station distances&#8230;</string>
+    <string name="infobox_starting_text">Initialize map&#8230;</string>
+    <string name="infobox_adding_stations">Adding station to the map&#8230;</string>
 
 </resources>
