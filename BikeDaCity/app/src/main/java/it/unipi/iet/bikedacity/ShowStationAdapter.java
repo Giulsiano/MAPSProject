@@ -42,17 +42,21 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
         }
     }
 
+    private List<Station> createStationList (){
+        List<Station> stations = new LinkedList<>();
+        // It is a TreeMap and it is guaranteed the iterator over the set returns the
+        // keys in ascending order
+        for (Float distance : dataSource.keySet()){
+            for (CityBikesStation cityBikesStation : dataSource.get(distance)){
+                stations.add(new Station(cityBikesStation, distance));
+            }
+        }
+        return stations;
+    }
+
     private List<Station> getStations (){
         if (stations == null){
-            stations = new LinkedList<>();
-            // It is a TreeMap and it is guaranteed the iterator over the set returns the
-            // keys in ascending order
-            for (Float distance : dataSource.keySet()){
-                for (CityBikesStation cityBikesStation : dataSource.get(distance)){
-                    Station station = new Station(cityBikesStation, distance);
-                    stations.add(station);
-                }
-            }
+            stations = createStationList();
         }
         return stations;
     }
@@ -68,7 +72,7 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
     @Override
     public void onBindViewHolder (@NonNull StationViewHolder holder, int position) {
         if (stations == null){
-            stations = getStations();
+            stations = createStationList();
         }
         Station station = stations.get(position);
         holder.stationDistance.setText(String.format(Locale.getDefault(), "%f", station.getDistance()));
@@ -77,6 +81,9 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
 
     @Override
     public int getItemCount () {
+        if (stations == null) {
+            stations = createStationList();
+        }
         return stations.size();
     }
 

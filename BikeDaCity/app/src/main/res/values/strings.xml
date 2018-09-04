@@ -109,6 +109,9 @@
     <string name="err_dialog_perm_not_granted_message">The application can\'t run without accessing
     your location and without writing to the external storage. Please reconsider to grant it access.</string>
     <string name="err_dialog_perm_not_granted_button">Exit</string>
+    <string name="err_dialog_no_city_found_title">No bikes</string>
+    <string name="err_dialog_no_city_found_message">BikeDaCity isn\'t able to find a bike sharing service here</string>
+    <string name="err_dialog_no_city_found_button">Exit</string>
 
 
     <!-- Alert dialog for permissions rationale -->
@@ -133,9 +136,10 @@
     <string name="no_gps_provider_enabled">GPS has to be enabled</string>
 
     <!-- Information for the information box -->
+    <string name="infobox_init_app">Initializing application&#8230;</string>
     <string name="infobox_request_city">Finding city&#8230;</string>
-    <string name="infobox_station_ordered">Compute station distances&#8230;</string>
-    <string name="infobox_starting_text">Initialize map&#8230;</string>
-    <string name="infobox_adding_stations">Adding station to the map&#8230;</string>
+    <string name="infobox_station_ordered">Computing station distances&#8230;</string>
+    <string name="infobox_starting_text">Initializing map&#8230;</string>
+    <string name="infobox_adding_stations">Adding stations to the map&#8230;</string>
 
 </resources>

@@ -46,7 +46,6 @@ public class CityBikesStation {
         emptySlots = jsonObject.getInt("empty_slots");
         lowThreshold = Math.min(2, (freeBikes + emptySlots) >> 3);
         mediumThreshold = Math.min(4, (freeBikes + emptySlots) >> 2);
-
         JSONObject extra;
         try {
             extra = (JSONObject) jsonObject.get("extra");
@@ -59,6 +58,8 @@ public class CityBikesStation {
             isOnline = null;
         }
         timestamp = new DateTime(jsonObject.getString("timestamp"));
+        freePlacesLevel = getFreePlacesLevel();
+        availableBikesLevel = getAvailableBikesLevel();
     }
 
     public static Comparator<CityBikesStation> FreePlaceComparator = new
@@ -77,14 +78,14 @@ public class CityBikesStation {
         }
     };
 
-    private Availability getLevelOf (int criteria){
-        if (criteria == 0){
+    private Availability getLevelOf (int it){
+        if (it == 0){
             return Availability.NO;
         }
-        if (criteria <= lowThreshold){
+        if (it <= lowThreshold){
             return Availability.LOW;
         }
-        if (criteria <= mediumThreshold){
+        if (it <= mediumThreshold){
             return Availability.MEDIUM;
         }
         else return Availability.HIGH;

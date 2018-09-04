@@ -26,6 +26,7 @@ public class OSMNominatimService {
      */
     public static String getCityFrom (double latitude, double longitude){
         String city = null;
+        Log.i(TAG, "Reverse geocoding for (" + latitude + ", " + longitude +")");
         try {
             URL reverseGeocodingUrl = new URL(OSMNominatimURL + "&lat=" + latitude +
                     "&lon=" + longitude);
@@ -45,6 +46,7 @@ public class OSMNominatimService {
 
     private static String downloadContentFrom (URL url){
         StringBuilder builder = new StringBuilder();
+        Log.i(TAG, "Downlading content from " + url.toString());
         try {
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
