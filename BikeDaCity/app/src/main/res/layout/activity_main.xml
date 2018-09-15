@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/main_activity_constraint_layout"
     tools:context=".MainActivity">
 
     <ProgressBar
@@ -48,9 +49,7 @@
         android:layout_height="323dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/refreshMap">
-
-    </org.osmdroid.views.MapView>
+        app:layout_constraintTop_toBottomOf="@+id/refreshMap"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/stationList"
@@ -59,6 +58,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/map"
         app:layout_constraintTop_toBottomOf="@+id/map" />
-
 
 </android.support.constraint.ConstraintLayout>
