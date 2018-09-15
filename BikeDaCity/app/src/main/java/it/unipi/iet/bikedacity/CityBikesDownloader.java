@@ -19,8 +19,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class CityBikesDownloader {
     //
     //TODO: if there is enough time before delivery try to do a cache manager via external
-    //storage
-    //
+    //TODO: storage
     private static final String TAG = "CityBikeDownloader";
     public static final String CITYBIKESAPIURL = "https://api.citybik.es";
     public static final String NETWORKSENDPOINT = "/v2/networks/";
