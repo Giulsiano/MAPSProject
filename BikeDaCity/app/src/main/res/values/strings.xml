@@ -77,7 +77,6 @@
     <string name="map_refresh_switch_key">map_referesh_switch</string>
     <string name="map_refresh_list_key">map_refresh</string>
 
-
     <!-- Titles -->
     <string name="pref_title_location">Enable location service</string>
     <string name="pref_location_category_name">Location</string>
@@ -86,7 +85,6 @@
     <string name="pref_map_refresh_switch_title">Enable autorefresh</string>
     <string name="pref_default_view_title">Default map view</string>
     <string name="pref_map_refresh_title">Autorefresh interval</string>
-
 
     <!-- Summaries -->
     <string name="pref_location_summary">Enable this if you want to request your location when the
@@ -113,7 +111,6 @@
     <string name="err_dialog_no_city_found_message">BikeDaCity isn\'t able to find a bike sharing service here</string>
     <string name="err_dialog_no_city_found_button">Exit</string>
 
-
     <!-- Alert dialog for permissions rationale -->
     <string name="perm_dialog_title">Why Permissions?</string>
     <string name="perm_dialog_message">This app will use GPS location for knowing
@@ -130,7 +127,6 @@
     <string name="enable_provider_positive_button">Enable GPS</string>
     <string name="enable_provider_negative_button">Exit app</string>
 
-
     <!-- Exceptions messages -->
     <string name="no_provider_enabled">No provider has been enabled</string>
     <string name="no_gps_provider_enabled">GPS has to be enabled</string>
@@ -141,5 +137,20 @@
     <string name="infobox_station_ordered">Computing station distances&#8230;</string>
     <string name="infobox_starting_text">Initializing map&#8230;</string>
     <string name="infobox_adding_stations">Adding stations to the map&#8230;</string>
+    <string name="infobox_current_location">Current location: %1$f, %2$f</string>
+    <string name="infobox_waiting_location">Waiting for location update&#8230;</string>
+
+    <!-- Station list contents -->
+    <string name="station_list_distance">Distance: $1%f m</string>
+    <string name="station_list_availability">Availablity: %1$d %2$s</string>
+    <string name="station_list_details">%1$s  %2$s</string>
+    <string name="station_list_free_places">slots</string>
+    <string name="station_list_free_bikes">bikes</string>
+
+    <!-- Marker related strings -->
+    <string name="marker_description_available_places">Available places: %1$d\nDistance: %2$f</string>
+    <string name="marker_description_available_bikes">Available places: %1$d\nDistance: %2$f</string>
+    <string name="marker_my_location_name">Me</string>
+    <string name="marker_my_location_description">I\'m here!</string>
 
 </resources>

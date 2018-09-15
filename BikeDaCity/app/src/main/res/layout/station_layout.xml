@@ -18,7 +18,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="12sp" />
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/view_on_map"
@@ -28,14 +28,13 @@
             android:layout_marginRight="8dp"
             android:background="@drawable/ic_map_black_24dp"
             android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:textSize="10sp" />
+            android:paddingRight="16dp" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/station_distance"
+        android:id="@+id/station_details"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
         android:textSize="8sp" />
 </LinearLayout>
