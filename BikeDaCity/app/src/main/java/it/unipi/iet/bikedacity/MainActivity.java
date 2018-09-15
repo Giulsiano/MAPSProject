@@ -1,7 +1,6 @@
 package it.unipi.iet.bikedacity;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.content.Context;
@@ -10,8 +9,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Criteria;
 import android.location.Location;
@@ -33,6 +30,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -46,9 +44,15 @@ import org.osmdroid.views.overlay.OverlayItem;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.TreeMap;
 
+
+// TODO add Location Service to respect requirements for settings activity
+// TODO new marker for availability (need Inkscape)
+// TODO change distances and map to <Integer, List<CityBikesStations>>
+// TODO check internet connection
+// TODO change to constraint layout and try to understand if there are needed some fragments
+// TODO change linear layout to constraint one
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback, LocationListener {
 
@@ -59,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements
     private Location currentLocation;
     private RecyclerView stationList;
     private TextView infoBox;
+
     private boolean permissionOk;
     private List<OverlayItem> mapItems;
     private boolean showAvailablePlaces;
@@ -73,21 +78,23 @@ public class MainActivity extends AppCompatActivity implements
 
     private class DownloadStationsTask extends AsyncTask<Void, ProgressState, TreeMap<Float, List<CityBikesStation>>> {
 
-        TextView infoBox;
         ProgressBar progressBar;
-        Activity parentActivity;
+        Button refreshMap;
+        MainActivity mainActivity;
 
-        public DownloadStationsTask(Activity parentActivity){
+        public DownloadStationsTask(MainActivity mainActivity){
             super();
+            refreshMap = findViewById(R.id.refreshMap);
             infoBox = findViewById(R.id.infoBox);
             progressBar = findViewById(R.id.indeterminateBar);
-            this.parentActivity = parentActivity;
+            this.mainActivity = mainActivity;
         }
 
         @Override
         protected void onPreExecute () {
             super.onPreExecute();
             progressBar.setVisibility(View.VISIBLE);
+            refreshMap.setVisibility(View.INVISIBLE);
             infoBox.setText(R.string.infobox_starting_text);
         }
 
@@ -128,10 +135,16 @@ public class MainActivity extends AppCompatActivity implements
                             public boolean onItemLongPress (int index, OverlayItem item) {
                                 return false;
                             }
-                        }, parentActivity);
+                        }, mainActivity);
                 cityMap.getOverlays().add(stationOverlay);
                 stationList.invalidate();
-                stationList.setAdapter(new ShowStationAdapter(stationMap));
+                stationList.setAdapter(new ShowStationAdapter(mainActivity, stationMap));
+                infoBox.setText(res.getString(R.string.infobox_current_location,
+                                              currentLocation.getLatitude(),
+                                              currentLocation.getLongitude()));
+                progressBar.setVisibility(View.INVISIBLE);
+                refreshMap.setVisibility(View.VISIBLE);
+                centreMapOn(currentLocation.getLatitude(), currentLocation.getLongitude());
             }
         }
 
@@ -159,7 +172,9 @@ public class MainActivity extends AppCompatActivity implements
             if (city == null) {
                 return null;
             }
-            cityBikesManager = new CityBikesManager(city);
+            if (cityBikesManager == null) {
+                cityBikesManager = new CityBikesManager(city);
+            }
             publishProgress(ProgressState.COMPUTING_DISTANCES);
             TreeMap<Float, List<CityBikesStation>> distanceMap = (showAvailablePlaces) ?
                     cityBikesManager.getNearestAvailableBikesFrom(currentLocation) :
@@ -168,34 +183,22 @@ public class MainActivity extends AppCompatActivity implements
             // Create the list of item that will be added to the city map
             if (distanceMap != null) {
                 mapItems = new ArrayList<>();
+                Resources res = mainActivity.getResources();
                 for (Float distance : distanceMap.keySet()){
                     for (CityBikesStation station : distanceMap.get(distance)){
                         String description;
                         Drawable marker;
                         if (showAvailablePlaces){
-                            description = String.format(Locale.getDefault(),
-                                    "Available places: %d\nDistance: %f", station.getEmptySlots(), distance);
-                            marker = getResources().getDrawable(R.drawable.ic_local_parking_24px);
+                            description = res.getString(R.string.marker_description_available_places,
+                                                        station.getEmptySlots(),
+                                                        distance);
+                            marker = res.getDrawable(R.drawable.ic_local_parking_24px);
                         }
                         else {
-                            description = String.format(Locale.getDefault(),
-                                    "Available bikes: %d\nDistance: %f", station.getFreeBikes(), distance);
-                            marker = getResources().getDrawable(R.drawable.ic_directions_bike_24px);
-                        }
-                        switch ((showAvailablePlaces) ? station.getFreePlacesLevel() :
-                                station.getAvailableBikesLevel()){
-                            case NO:
-                                marker.setColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY);
-                                break;
-
-                            case LOW:
-                                marker.setColorFilter(Color.YELLOW, PorterDuff.Mode.MULTIPLY);
-                                break;
-
-                            case MEDIUM:
-                            case HIGH:
-                                marker.setColorFilter(Color.GREEN, PorterDuff.Mode.MULTIPLY);
-                                break;
+                            description = res.getString(R.string.marker_description_available_bikes,
+                                                        station.getFreeBikes(),
+                                                        distance);
+                            marker = res.getDrawable(R.drawable.ic_directions_bike_24px);
                         }
                         OverlayItem stationItem = new OverlayItem(station.getName(),
                                 description,
@@ -205,9 +208,21 @@ public class MainActivity extends AppCompatActivity implements
                         mapItems.add(stationItem);
                     }
                 }
+                // Add current location marker also
+                OverlayItem currentLocationItem = new OverlayItem(res.getString(R.string.marker_my_location_name),
+                                                                  res.getString(R.string.marker_my_location_description),
+                                                                  new GeoPoint(currentLocation.getLatitude(),
+                                                                        currentLocation.getLongitude())
+                );
+                currentLocationItem.setMarker(res.getDrawable(R.drawable.ic_place_24px));
+                mapItems.add(currentLocationItem);
             }
             return distanceMap;
         }
+    }
+
+    public boolean isShowingAvailablePlaces (){
+        return showAvailablePlaces;
     }
 
     @Override
@@ -409,6 +424,7 @@ public class MainActivity extends AppCompatActivity implements
                             Log.w(TAG, "No providers satisfy criteria found");
 
                         }
+                        infoBox.setText(getResources().getString(R.string.infobox_waiting_location));
                         locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER,
                                 this,
                                 null);
@@ -475,17 +491,23 @@ public class MainActivity extends AppCompatActivity implements
         startActivity(Intent.createChooser(browserIntent, "Open in browser"));
     }
 
+    public void refreshMap (View v){
+        // TODO implement the refreshing of the map, it could require some changes on design
+    }
+
+    public void centreMapOn (double latitude, double longitude) {
+        /* TODO there is a problem with set center then zoom
+            maybe swapping the two things can produce the correct result but it has to be tested
+        * */
+        IMapController controller = cityMap.getController();
+        controller.setCenter(new GeoPoint(latitude, longitude));
+        controller.zoomTo(12, 1000L);
+    }
+
     @Override
     public void onLocationChanged (Location location) {
         currentLocation = location;
-
-        // Centre the map to the new location
-        GeoPoint currentPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
-        IMapController mapController = cityMap.getController();
-        mapController.setCenter(currentPoint);
-        mapController.zoomTo(16, 1000L);
         new DownloadStationsTask(this).execute();
-        // TODO check internet connection
     }
 
     @Override
