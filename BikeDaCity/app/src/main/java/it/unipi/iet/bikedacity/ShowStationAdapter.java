@@ -17,12 +17,12 @@ import java.util.TreeMap;
 
 public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.StationViewHolder>{
 
-    private TreeMap<Float, List<CityBikesStation>> dataSource;
+    private TreeMap<Integer, List<CityBikesStation>> dataSource;
     private List<Station> stations;
     private MainActivity mainActivity;
     private Button viewOnMap;
 
-    public ShowStationAdapter (MainActivity ma, TreeMap<Float, List<CityBikesStation>> distanceMap){
+    public ShowStationAdapter (MainActivity ma, TreeMap<Integer, List<CityBikesStation>> distanceMap){
         dataSource = distanceMap;
         stations = null;
         this.mainActivity = ma;
@@ -51,7 +51,7 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
         List<Station> stations = new LinkedList<>();
         // It is a TreeMap and it is guaranteed the iterator over the set returns the
         // keys in ascending order
-        for (Float distance : dataSource.keySet()){
+        for (Integer distance : dataSource.keySet()){
             for (CityBikesStation cityBikesStation : dataSource.get(distance)){
                 stations.add(new Station(cityBikesStation, distance));
             }

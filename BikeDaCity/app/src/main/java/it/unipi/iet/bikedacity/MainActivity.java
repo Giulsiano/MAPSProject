@@ -46,13 +46,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-
+// TODO make about fragment dialog an activity
 // TODO add Location Service to respect requirements for settings activity
 // TODO new marker for availability (need Inkscape)
-// TODO change distances and map to <Integer, List<CityBikesStations>>
 // TODO check internet connection
-// TODO change to constraint layout and try to understand if there are needed some fragments
-// TODO change linear layout to constraint one
+// TODO try to understand if there are needed some fragments (maybe only one)
+
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback, LocationListener {
 
@@ -76,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements
         COMPUTING_DISTANCES
     }
 
-    private class DownloadStationsTask extends AsyncTask<Void, ProgressState, TreeMap<Float, List<CityBikesStation>>> {
+    private class DownloadStationsTask extends AsyncTask<Void, ProgressState, TreeMap<Integer, List<CityBikesStation>>> {
 
         ProgressBar progressBar;
         Button refreshMap;
@@ -99,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         @Override
-        protected void onPostExecute (final TreeMap<Float, List<CityBikesStation>> stationMap) {
+        protected void onPostExecute (final TreeMap<Integer, List<CityBikesStation>> stationMap) {
             super.onPostExecute(stationMap);
             Resources res = getResources();
             infoBox.setText(res.getString(R.string.infobox_adding_stations));
@@ -164,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         @Override
-        protected TreeMap<Float, List<CityBikesStation>> doInBackground (Void... voids) {
+        protected TreeMap<Integer, List<CityBikesStation>> doInBackground (Void... voids) {
             Log.d(TAG, "doInBackground()");
             publishProgress(ProgressState.REQUEST_CITY);
             String city = OSMNominatimService.getCityFrom(currentLocation.getLatitude(),
@@ -176,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements
                 cityBikesManager = new CityBikesManager(city);
             }
             publishProgress(ProgressState.COMPUTING_DISTANCES);
-            TreeMap<Float, List<CityBikesStation>> distanceMap = (showAvailablePlaces) ?
+            TreeMap<Integer, List<CityBikesStation>> distanceMap = (showAvailablePlaces) ?
                     cityBikesManager.getNearestAvailableBikesFrom(currentLocation) :
                     cityBikesManager.getNearestFreePlacesFrom(currentLocation);
 
@@ -184,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements
             if (distanceMap != null) {
                 mapItems = new ArrayList<>();
                 Resources res = mainActivity.getResources();
-                for (Float distance : distanceMap.keySet()){
+                for (Integer distance : distanceMap.keySet()){
                     for (CityBikesStation station : distanceMap.get(distance)){
                         String description;
                         Drawable marker;

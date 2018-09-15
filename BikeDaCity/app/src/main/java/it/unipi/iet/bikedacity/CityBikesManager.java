@@ -27,11 +27,6 @@ public class CityBikesManager {
     private List<CityBikesStation> stations;
 
     // TODO add storing networks' JSON to a file
-    public CityBikesManager (String city, CityBikesDownloader downloader){
-        this.city = city;
-        this.downloader = downloader;
-    }
-
     public CityBikesManager (String city){
         downloader = new CityBikesDownloader();
         this.city = city;
@@ -49,17 +44,17 @@ public class CityBikesManager {
         city = c;
     }
 
-    private TreeMap<Float, List<CityBikesStation>> getStationsOrderedByDistanceFrom (Location location){
+    private TreeMap<Integer, List<CityBikesStation>> getStationsOrderedByDistanceFrom (Location location){
         // Use a TreeMap that implements SortedMap interface to automatically obtain an ordered map
-        float distance;
-        TreeMap<Float, List<CityBikesStation>> distanceMap = new TreeMap<>();
+        int distance;
+        TreeMap<Integer, List<CityBikesStation>> distanceMap = new TreeMap<>();
         Log.i(TAG, "Order stations by distance");
         if (stations == null){
             Log.d(TAG, "Station object is null. Downloading stations");
             stations = downloader.getStationsOf(city);
         }
         for (CityBikesStation station : stations){
-            distance = location.distanceTo(station.getLocation());
+            distance = Math.round(location.distanceTo(station.getLocation()));
             if (distanceMap.containsKey(distance)){
                 Log.d("TAG", "Add station to list");
                 List<CityBikesStation> stationList = distanceMap.get(distance);
@@ -83,7 +78,7 @@ public class CityBikesManager {
      * @return  An ordered by distance Map (TreeMap in this case) which contains the list of stations ordered by
      * availability. This method will return null if the location is null itself.
      */
-    public TreeMap<Float, List<CityBikesStation>> getNearestFreePlacesFrom (Location location){
+    public TreeMap<Integer, List<CityBikesStation>> getNearestFreePlacesFrom (Location location){
         Log.i(TAG, "Get nearest station with free places available");
         if (location == null){
             Log.e(TAG, "Location passed is null");
@@ -94,10 +89,10 @@ public class CityBikesManager {
             return null;
         }
         // Order the station by their free place availability
-        TreeMap<Float, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
+        TreeMap<Integer, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
         Log.i(TAG,"Ordering the list of stations by availability");
-        for (Iterator<Float> it = distanceMap.keySet().iterator(); it.hasNext();){
-            Float distance = it.next();
+        for (Iterator<Integer> it = distanceMap.keySet().iterator(); it.hasNext();){
+            Integer distance = it.next();
             List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.FreePlaceComparator);
 
@@ -110,7 +105,7 @@ public class CityBikesManager {
         return distanceMap;
     }
 
-    public TreeMap<Float, List<CityBikesStation>> getNearestAvailableBikesFrom (Location location){
+    public TreeMap<Integer, List<CityBikesStation>> getNearestAvailableBikesFrom (Location location){
         Log.i(TAG, "Get nearest station with available bikes");
         if (location == null){
             Log.e(TAG, "Location passed is null");
@@ -121,10 +116,10 @@ public class CityBikesManager {
             return null;
         }
         // Order the station by their free place availability
-        TreeMap<Float, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
+        TreeMap<Integer, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
         Log.i(TAG,"Ordering the list of stations by availability");
-        for (Iterator<Float> it = distanceMap.keySet().iterator(); it.hasNext();){
-            Float distance = it.next();
+        for (Iterator<Integer> it = distanceMap.keySet().iterator(); it.hasNext();){
+            Integer distance = it.next();
             List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.AvailableBikesComparator);
 
