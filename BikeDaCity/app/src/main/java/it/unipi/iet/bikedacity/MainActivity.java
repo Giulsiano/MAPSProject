@@ -2,7 +2,7 @@ package it.unipi.iet.bikedacity;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.DialogFragment;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,7 +14,6 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -49,11 +48,11 @@ import java.util.TreeMap;
 // TODO make about fragment dialog an activity
 // TODO add Location Service to respect requirements for settings activity
 // TODO new marker for availability (need Inkscape)
-// TODO check internet connection
 // TODO try to understand if there are needed some fragments (maybe only one)
+// TODO use onSaveInstateState to save simple values
 
 public class MainActivity extends AppCompatActivity implements
-        ActivityCompat.OnRequestPermissionsResultCallback, LocationListener {
+        ActivityCompat.OnRequestPermissionsResultCallback {
 
     static final String TAG = "MainActivity";
     private MapView cityMap;
@@ -220,15 +219,10 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public boolean isShowingAvailablePlaces (){
-        return showAvailablePlaces;
-    }
-
     @Override
     protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // If permissions have not been granted ask the user to do that
         if (isExternalStorageAvailable()){
             // Initialize the map
             Context ctx = getApplicationContext();
@@ -340,7 +334,7 @@ public class MainActivity extends AppCompatActivity implements
         permissionOk &= ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED;
         if (!permissionOk) {
-            dealWithPermissions();
+            showPermissionsDialog();
         }
         else {
             Log.i(TAG, "App has the right permissions granted");
@@ -363,7 +357,7 @@ public class MainActivity extends AppCompatActivity implements
         return currentLocation == null || Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > time;
     }
 
-    private void dealWithPermissions(){
+    private void showPermissionsDialog (){
         Log.i(TAG, "Request permissions to the user");
         final AppCompatActivity mainActivity = this;
         AlertDialog permissionDialog = createAlertDialogWithPositiveButtonOnly(
@@ -452,8 +446,7 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected (MenuItem item) {
         switch (item.getItemId()){
             case R.id.about:
-                DialogFragment df = new AboutFragmentDialog();
-                df.show(getFragmentManager(), "AboutDialog");
+                startActivityForResult(new Intent(MainActivity.this, AboutActivity.class), 1);
                 return true;
 
             case R.id.settings:
@@ -465,62 +458,65 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void sendEmail (View v){
-        Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto",
-                getResources().getString(R.string.devel_email),
-                null));
-        startActivity(Intent.createChooser(emailIntent, "Send email to developer"));
-    }
-
-    public void openSite (View v){
-        String url = "https://";
-        switch (v.getId()){
-            case R.id.source_name_1:
-            case R.id.source_site_1:
-                url += getResources().getString(R.string.source_site_1);
-                break;
-
-            case R.id.source_name_2:
-            case R.id.source_site_2:
-                url += getResources().getString(R.string.source_site_2);
-                break;
-        }
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW);
-        browserIntent.setData(Uri.parse(url));
-        startActivity(Intent.createChooser(browserIntent, "Open in browser"));
-    }
-
     public void refreshMap (View v){
         // TODO implement the refreshing of the map, it could require some changes on design
     }
 
-    public void centreMapOn (double latitude, double longitude) {
-        /* TODO there is a problem with set center then zoom
-            maybe swapping the two things can produce the correct result but it has to be tested
-        * */
-        IMapController controller = cityMap.getController();
-        controller.setCenter(new GeoPoint(latitude, longitude));
-        controller.zoomTo(12, 1000L);
-    }
+    public class LocationBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive (Context context, Intent intent) {
+            if (context instanceof MainActivity){
+                if (intent.hasExtra(LocationManager.KEY_LOCATION_CHANGED)) {
+                    Location location = (Location)
+                            intent.getExtras().get(LocationManager.KEY_LOCATION_CHANGED);
+                    onLocationChanged(context, location);
+                }
+                else if (intent.hasExtra(LocationManager.KEY_PROVIDER_ENABLED)) {
+                    if (intent.getExtras().getBoolean(LocationManager.KEY_PROVIDER_ENABLED)) {
+                        onProviderEnabled(null);
+                    }
+                    else {
+                        onProviderDisabled(null);
+                    }
+                }
+                else if (intent.hasExtra(LocationManager.KEY_PROXIMITY_ENTERING)) {
+                    if (intent.getBooleanExtra(LocationManager.KEY_PROXIMITY_ENTERING, false)) {
+                        onEnteringProximity(context);
+                    }
+                    else {
+                        onExitingProximity(context);
+                    }
+                }
+                else if (intent.hasExtra(LocationManager.KEY_STATUS_CHANGED)) {
+                    onStatusChanged();
+                }
+            }
+        }
 
-    @Override
-    public void onLocationChanged (Location location) {
-        currentLocation = location;
-        new DownloadStationsTask(this).execute();
-    }
+        public void onLocationChanged (Context context, Location location){
+            currentLocation = location;
+            new DownloadStationsTask(context).execute();
+        }
 
-    @Override
-    public void onStatusChanged (String provider, int status, Bundle extras) {
+        public void onProviderEnabled (Context context){
 
-    }
+        }
 
-    @Override
-    public void onProviderEnabled (String provider) {
+        public void onProviderDisabled (Context context){
 
-    }
+        }
 
-    @Override
-    public void onProviderDisabled (String provider) {
+        public void onEnteringProximity (Context context){
+
+        }
+
+        public void onExitingProximity (Context context){
+
+        }
+
+        public void onStatusChanged (){
+
+        }
 
     }
 }
