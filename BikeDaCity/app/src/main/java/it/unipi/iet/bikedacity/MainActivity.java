@@ -1,16 +1,16 @@
 package it.unipi.iet.bikedacity;
 
 import android.Manifest;
-import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
@@ -44,22 +44,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-// TODO make about fragment dialog an activity
+// TODO add setting for location updates
+// TODO get settings, reorder of the code
 // TODO add Location Service to respect requirements for settings activity
 // TODO new marker for availability (need Inkscape)
-// TODO try to understand if there are needed some fragments (maybe only one)
 // TODO use onSaveInstateState to save simple values
 
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
 
-    static final String TAG = "MainActivity";
+    private static final String TAG = "MainActivity";
+    private static final String CHANGE_LOCATION_ACTION = "it.unipi.iet.bikedacity.CHANGE_LOCATION";
+    private static final int REQUEST_CODE = 0;
+
+    private SharedPreferences preferences;
+    private Resources resources;
     private MapView cityMap;
     private CityBikesManager cityBikesManager;
     private LocationManager locationManager;
     private Location currentLocation;
     private RecyclerView stationList;
     private TextView infoBox;
+    private LocationBroadcastReceiver locationReceiver;
+    private PendingIntent pendingIntent;
 
     private boolean permissionOk;
     private List<OverlayItem> mapItems;
@@ -70,25 +77,26 @@ public class MainActivity extends AppCompatActivity implements
 
     enum ProgressState{
         REQUEST_CITY,
-        COMPUTING_DISTANCES
+        COMPUTING_DISTANCES,
+        MAKE_STATION_LIST
     }
 
     private class DownloadStationsTask extends AsyncTask<Void, ProgressState, TreeMap<Integer, List<CityBikesStation>>> {
 
         ProgressBar progressBar;
         Button refreshMap;
-        Context mainActivity;
+        Context context;
 
-        public DownloadStationsTask(Context mainActivity){
+        public DownloadStationsTask (Context ctx){
             super();
             refreshMap = findViewById(R.id.refreshMap);
             infoBox = findViewById(R.id.infoBox);
             progressBar = findViewById(R.id.indeterminateBar);
-            this.mainActivity = mainActivity;
+            this.context = ctx;
         }
 
         @Override
-        protected void onPreExecute () {
+        protected void onPreExecute (){
             super.onPreExecute();
             progressBar.setVisibility(View.VISIBLE);
             refreshMap.setVisibility(View.INVISIBLE);
@@ -96,13 +104,12 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         @Override
-        protected void onPostExecute (final TreeMap<Integer, List<CityBikesStation>> stationMap) {
+        protected void onPostExecute (final TreeMap<Integer, List<CityBikesStation>> stationMap){
             super.onPostExecute(stationMap);
-            Resources res = getResources();
-            infoBox.setText(res.getString(R.string.infobox_adding_stations));
+            infoBox.setText(resources.getString(R.string.infobox_adding_stations));
             if (stationMap == null){
                 // Exit the app if there are no stations
-                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(mainActivity,
+                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
                         R.string.err_dialog_no_city_found_title,
                         R.string.err_dialog_no_city_found_message,
                         R.string.err_dialog_no_city_found_button,
@@ -132,46 +139,43 @@ public class MainActivity extends AppCompatActivity implements
                             public boolean onItemLongPress (int index, OverlayItem item) {
                                 return false;
                             }
-                        }, mainActivity);
+                        }, context);
                 cityMap.getOverlays().add(stationOverlay);
 
                 // Recreate the RecyclerView list and center the map to the current location
                 stationList.invalidate();
-                stationList.setAdapter(new ShowStationAdapter(mainActivity,
+                stationList.setAdapter(new ShowStationAdapter(context,
                                                               stationMap,
                                                               cityMap,
                                                               showAvailablePlaces));
-                infoBox.setText(res.getString(R.string.infobox_current_location,
+                infoBox.setText(resources.getString(R.string.infobox_current_location,
                                               currentLocation.getLatitude(),
                                               currentLocation.getLongitude()));
                 progressBar.setVisibility(View.INVISIBLE);
                 refreshMap.setVisibility(View.VISIBLE);
-                IMapController controller = cityMap.getController();
-
-                // Need to zoom then center due to a bug in OSMDroid
-                controller.zoomTo(14, 1000L);
-                controller.setCenter(new GeoPoint(currentLocation.getLatitude(),
-                                                  currentLocation.getLongitude()));
             }
         }
 
         @Override
-        protected void onProgressUpdate (ProgressState... progresses) {
+        protected void onProgressUpdate (ProgressState... progresses){
             super.onProgressUpdate(progresses);
-            ProgressState progressState = progresses[0];
-            switch(progressState){
+            switch(progresses[0]){
                 case REQUEST_CITY:
-                    infoBox.setText(getResources().getString(R.string.infobox_request_city));
+                    infoBox.setText(resources.getString(R.string.infobox_request_city));
                     break;
 
                 case COMPUTING_DISTANCES:
-                    infoBox.setText(getResources().getString(R.string.infobox_station_ordered));
+                    infoBox.setText(resources.getString(R.string.infobox_station_ordered));
+                    break;
+
+                case MAKE_STATION_LIST:
+                    infoBox.setText(resources.getString(R.string.infobox_make_stations));
                     break;
             }
         }
 
         @Override
-        protected TreeMap<Integer, List<CityBikesStation>> doInBackground (Void... voids) {
+        protected TreeMap<Integer, List<CityBikesStation>> doInBackground (Void... voids){
             Log.d(TAG, "doInBackground()");
             publishProgress(ProgressState.REQUEST_CITY);
             String city = OSMNominatimService.getCityFrom(currentLocation.getLatitude(),
@@ -188,24 +192,24 @@ public class MainActivity extends AppCompatActivity implements
                     cityBikesManager.getNearestFreePlacesFrom(currentLocation);
 
             // Create the list of item that will be added to the city map
+            publishProgress(ProgressState.MAKE_STATION_LIST);
             if (distanceMap != null) {
                 mapItems = new ArrayList<>();
-                Resources res = mainActivity.getResources();
                 for (Integer distance : distanceMap.keySet()){
                     for (CityBikesStation station : distanceMap.get(distance)){
                         String description;
                         Drawable marker;
                         if (showAvailablePlaces){
-                            description = res.getString(R.string.marker_description_available_places,
+                            description = resources.getString(R.string.marker_description_available_places,
                                                         station.getEmptySlots(),
                                                         distance);
-                            marker = res.getDrawable(R.drawable.ic_local_parking_24px);
+                            marker = resources.getDrawable(R.drawable.ic_local_parking_24px);
                         }
                         else {
-                            description = res.getString(R.string.marker_description_available_bikes,
+                            description = resources.getString(R.string.marker_description_available_bikes,
                                                         station.getFreeBikes(),
                                                         distance);
-                            marker = res.getDrawable(R.drawable.ic_directions_bike_24px);
+                            marker = resources.getDrawable(R.drawable.ic_directions_bike_24px);
                         }
                         OverlayItem stationItem = new OverlayItem(station.getName(),
                                 description,
@@ -216,12 +220,12 @@ public class MainActivity extends AppCompatActivity implements
                     }
                 }
                 // Add current location marker also
-                OverlayItem currentLocationItem = new OverlayItem(res.getString(R.string.marker_my_location_name),
-                                                                  res.getString(R.string.marker_my_location_description),
+                OverlayItem currentLocationItem = new OverlayItem(resources.getString(R.string.marker_my_location_name),
+                                                                  resources.getString(R.string.marker_my_location_description),
                                                                   new GeoPoint(currentLocation.getLatitude(),
                                                                         currentLocation.getLongitude())
                 );
-                currentLocationItem.setMarker(res.getDrawable(R.drawable.ic_place_24px));
+                currentLocationItem.setMarker(resources.getDrawable(R.drawable.ic_place_24px));
                 mapItems.add(currentLocationItem);
             }
             return distanceMap;
@@ -229,14 +233,20 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    protected void onCreate (Bundle savedInstanceState) {
+    protected void onCreate (Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
 
         if (isExternalStorageAvailable()){
             // Initialize the map
             Context ctx = getApplicationContext();
-            Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+            Configuration.getInstance().load(ctx,
+                            PreferenceManager.getDefaultSharedPreferences(ctx));
             setContentView(R.layout.activity_main);
+            resources = getResources();
+            infoBox = findViewById(R.id.infoBox);
+            infoBox.setText(R.string.infobox_init_app);
+            locationReceiver = new LocationBroadcastReceiver();
+            pendingIntent = createPendingIntent();
             stationList = findViewById(R.id.stationList);
             stationList.setHasFixedSize(true);
             stationList.setLayoutManager(new LinearLayoutManager(this));
@@ -245,12 +255,11 @@ public class MainActivity extends AppCompatActivity implements
             cityMap.setTilesScaledToDpi(true);
             cityMap.setBuiltInZoomControls(true);
             cityMap.setMultiTouchControls(true);
+            pendingIntent = createPendingIntent();
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
             permissionOk = false;
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-            showAvailablePlaces = sp.getBoolean(getResources().getString(R.string.map_default_view_list_key),true);
-            infoBox = findViewById(R.id.infoBox);
-            infoBox.setText(R.string.infobox_init_app);
+            preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            showAvailablePlaces = preferences.getBoolean(resources.getString(R.string.map_default_view_list_key),true);
         }
         else {
             BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
@@ -264,6 +273,11 @@ public class MainActivity extends AppCompatActivity implements
                         }
                     }).show();
         }
+    }
+
+    private PendingIntent createPendingIntent () {
+        Intent intent = new Intent(CHANGE_LOCATION_ACTION);
+        return PendingIntent.getBroadcast(getApplicationContext(), REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     @Override
@@ -309,7 +323,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onStart (){
         super.onStart();
-
         // Request permission for this app to work properly
         permissionOk = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
@@ -327,20 +340,26 @@ public class MainActivity extends AppCompatActivity implements
                 requestEnablingProvider();
             }
             else {
-                currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if (isCurrentLocationOlderThan(OLD_THRESHOLD)){
-                    // TODO delete part of this code since it is useless with locationBroadcastReceiver
-                    Log.i(TAG, "Current location is too old. Request a new one");
-                    locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER,
-                            this,
-                            null);
+                if (currentLocation == null){
+                    currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    if (isCurrentLocationTooOld()){
+                        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
+                    }
                 }
+                int minTime = preferences.getInt(resources.getString(R.string.min_time_key),
+                                                 1000);
+                int minDistance = preferences.getInt(resources.getString(R.string.min_dist_key),
+                                                     100);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                                                       minTime,
+                                                       minDistance,
+                                                       pendingIntent);
             }
         }
     }
 
-    private boolean isCurrentLocationOlderThan (long time){
-        return currentLocation == null || Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > time;
+    private boolean isCurrentLocationTooOld(){
+        return Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > OLD_THRESHOLD;
     }
 
     private void requestEnablingProvider (){
@@ -369,45 +388,15 @@ public class MainActivity extends AppCompatActivity implements
     public void onResume (){
         super.onResume();
         cityMap.onResume();
-        if (currentLocation == null){
-            Log.i(TAG, "Current location is null. Require new location if known");
-            try {
-                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-                    Log.i(TAG, LocationManager.GPS_PROVIDER + " is enabled");
-                    currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                    if (isCurrentLocationOlderThan(OLD_THRESHOLD)){
-                        Log.i(TAG, "Current location is too old. Request a new one");
-                        Criteria criteria = new Criteria();
-                        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-                        List<String> providers = locationManager.getProviders(criteria, true);
-                        if (providers.isEmpty() || !providers.contains(LocationManager.GPS_PROVIDER)){
-                            Log.w(TAG, "No providers satisfy criteria found");
-
-                        }
-                        infoBox.setText(getResources().getString(R.string.infobox_waiting_location));
-                        // TODO delete part of this code since it is useless with locationBroadcastReceiver
-                        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER,
-                                this,
-                                null);
-                    }
-                }
-                else {
-                    Log.w(TAG, "GPS is not enabled");
-                    requestEnablingProvider();
-                }
-            }
-            catch (SecurityException e){
-                Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
-            }
-        }
+        registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
     }
 
     @Override
     public void onPause (){
-        // TODO we need a BroadcastReceiver to be unregistered
         Log.d(TAG, "onPause() Called");
         super.onPause();
         cityMap.onPause();
+        unregisterReceiver(locationReceiver);
     }
 
     @Override
@@ -433,37 +422,42 @@ public class MainActivity extends AppCompatActivity implements
     public class LocationBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive (Context context, Intent intent) {
-            if (context instanceof MainActivity){
-                if (intent.hasExtra(LocationManager.KEY_LOCATION_CHANGED)) {
-                    Location location = (Location)
-                            intent.getExtras().get(LocationManager.KEY_LOCATION_CHANGED);
-                    onLocationChanged(context, location);
+            if (intent.hasExtra(LocationManager.KEY_LOCATION_CHANGED)) {
+                Location location = (Location)
+                        intent.getExtras().get(LocationManager.KEY_LOCATION_CHANGED);
+                onLocationChanged(context, location);
+            }
+            else if (intent.hasExtra(LocationManager.KEY_PROVIDER_ENABLED)) {
+                if (intent.getExtras().getBoolean(LocationManager.KEY_PROVIDER_ENABLED)) {
+                    onProviderEnabled(null);
                 }
-                else if (intent.hasExtra(LocationManager.KEY_PROVIDER_ENABLED)) {
-                    if (intent.getExtras().getBoolean(LocationManager.KEY_PROVIDER_ENABLED)) {
-                        onProviderEnabled(null);
-                    }
-                    else {
-                        onProviderDisabled(null);
-                    }
+                else {
+                    onProviderDisabled(null);
                 }
-                else if (intent.hasExtra(LocationManager.KEY_PROXIMITY_ENTERING)) {
-                    if (intent.getBooleanExtra(LocationManager.KEY_PROXIMITY_ENTERING, false)) {
-                        onEnteringProximity(context);
-                    }
-                    else {
-                        onExitingProximity(context);
-                    }
+            }
+            else if (intent.hasExtra(LocationManager.KEY_PROXIMITY_ENTERING)) {
+                if (intent.getBooleanExtra(LocationManager.KEY_PROXIMITY_ENTERING, false)) {
+                    onEnteringProximity(context);
                 }
-                else if (intent.hasExtra(LocationManager.KEY_STATUS_CHANGED)) {
-                    onStatusChanged();
+                else {
+                    onExitingProximity(context);
                 }
+            }
+            else if (intent.hasExtra(LocationManager.KEY_STATUS_CHANGED)) {
+                onStatusChanged();
             }
         }
 
         public void onLocationChanged (Context context, Location location){
             currentLocation = location;
             new DownloadStationsTask(context).execute();
+            IMapController controller = cityMap.getController();
+
+            // Need to zoom then center due to a bug in OSMDroid
+            controller.animateTo(new GeoPoint(currentLocation.getLatitude(),
+                                              currentLocation.getLongitude()),
+                                 18.0,
+                                 500L);
         }
 
         public void onProviderEnabled (Context context){

@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">BikeDaCity</string>
+
+    <!-- About Activity related strings -->
     <string name="about_entry">About BikeDaCity</string>
     <string name="about_dialog_title">About</string>S
     <string name="devel_title">Developer</string>
@@ -10,10 +12,10 @@
     <string name="source_name_2">OSMDroid</string>
     <string name="source_site_1">citybik.es</string>
     <string name="source_site_2">github.com/osmdroid/osmdroid/</string>
-    <string name="title_activity_settings">Settings</string>
     <string name="title_activity_about">About</string>
 
     <!-- Strings related to Settings -->
+    <string name="title_activity_settings">Settings</string>
     <string name="pref_header_location">Location Settings</string>
     <string name="pref_header_map">Map Settings</string>
 
@@ -77,6 +79,8 @@
     <string name="map_default_view_list_key">default_view</string>
     <string name="map_refresh_switch_key">map_referesh_switch</string>
     <string name="map_refresh_list_key">map_refresh</string>
+    <string name="min_time_key">minTime</string>
+    <string name="min_dist_key">minDistance</string>
 
     <!-- Titles -->
     <string name="pref_title_location">Enable location service</string>
@@ -132,7 +136,7 @@
     <string name="no_provider_enabled">No provider has been enabled</string>
     <string name="no_gps_provider_enabled">GPS has to be enabled</string>
 
-    <!-- Information for the information box -->
+    <!-- Information box text -->
     <string name="infobox_init_app">Initializing application&#8230;</string>
     <string name="infobox_request_city">Finding city&#8230;</string>
     <string name="infobox_station_ordered">Computing station distances&#8230;</string>
@@ -140,6 +144,8 @@
     <string name="infobox_adding_stations">Adding stations to the map&#8230;</string>
     <string name="infobox_current_location">Current location: %1$f, %2$f</string>
     <string name="infobox_waiting_location">Waiting for location update&#8230;</string>
+    <string name="infobox_make_stations">Making stations for the map&#8230;</string>
+
 
     <!-- Station list contents -->
     <string name="station_list_distance">Distance: %1$d m</string>
