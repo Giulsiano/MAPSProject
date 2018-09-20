@@ -43,8 +43,7 @@ public class SettingsActivity extends Activity {
 
                 // Set the summary to reflect the new value.
                 String summary;
-                String preferenceKey = preference.getKey();
-                if (res.getString(R.string.map_provider_list_key).equals(preferenceKey)) {
+                if (res.getString(R.string.map_provider_list_key).equals(preference.getKey())) {
                     switch (index){
                         // Google Map entry has been chosen
                         case 0:
