@@ -12,7 +12,6 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -103,7 +102,8 @@ public class MainActivity extends AppCompatActivity implements
             infoBox.setText(res.getString(R.string.infobox_adding_stations));
             if (stationMap == null){
                 // Exit the app if there are no stations
-                AlertDialog noCityDialog = createAlertDialogWithPositiveButtonOnly(R.string.err_dialog_no_city_found_title,
+                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(mainActivity,
+                        R.string.err_dialog_no_city_found_title,
                         R.string.err_dialog_no_city_found_message,
                         R.string.err_dialog_no_city_found_button,
                         new DialogInterface.OnClickListener() {
@@ -111,8 +111,7 @@ public class MainActivity extends AppCompatActivity implements
                             public void onClick (DialogInterface dialog, int which) {
                                 finish();
                             }
-                        });
-                noCityDialog.show();
+                        }).show();
             }
             else {
                 if (mapItems == null || mapItems.isEmpty()){
@@ -254,7 +253,7 @@ public class MainActivity extends AppCompatActivity implements
             infoBox.setText(R.string.infobox_init_app);
         }
         else {
-            AlertDialog errorAlert = createAlertDialogWithPositiveButtonOnly(
+            BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
                     R.string.err_dialog_no_ext_storage_title,
                     R.string.err_dialog_no_ext_storage_message,
                     R.string.err_dialog_no_ext_storage_button,
@@ -263,34 +262,8 @@ public class MainActivity extends AppCompatActivity implements
                         public void onClick (DialogInterface dialog, int which) {
                             finish();
                         }
-                    });
-            errorAlert.show();
+                    }).show();
         }
-    }
-
-    private AlertDialog createAlertDialogWithPositiveButtonOnly (int title,
-                                                                 int message,
-                                                                 int buttonText,
-                                                                 DialogInterface.OnClickListener listener){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.setPositiveButton(buttonText, listener);
-        return builder.create();
-    }
-
-    private AlertDialog createAlertDialogWithTwoButton (int title,
-                                                        int message,
-                                                        int positiveButtonText,
-                                                        int negativeButtonText,
-                                                        DialogInterface.OnClickListener positiveListener,
-                                                        DialogInterface.OnClickListener negativeListener){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.setPositiveButton(positiveButtonText, positiveListener);
-        builder.setNegativeButton(negativeButtonText, negativeListener);
-        return builder.create();
     }
 
     @Override
@@ -303,7 +276,7 @@ public class MainActivity extends AppCompatActivity implements
                 this.permissionOk = true;
             }
             else {
-                AlertDialog errorDialog = createAlertDialogWithPositiveButtonOnly(
+                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
                         R.string.err_dialog_perm_not_granted_title,
                         R.string.err_dialog_perm_not_granted_message,
                         R.string.err_dialog_perm_not_granted_button,
@@ -313,8 +286,7 @@ public class MainActivity extends AppCompatActivity implements
                                 finish();
                             }
                         }
-                );
-                errorDialog.show();
+                ).show();
             }
         }
         else {
@@ -344,7 +316,10 @@ public class MainActivity extends AppCompatActivity implements
         permissionOk &= ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED;
         if (!permissionOk) {
-            showPermissionsDialog();
+            Log.i(TAG, "Request permissions to the user");
+            BikeDaCityUtil.getPermissionsRationaleDialog(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE}).show();
         }
         else {
             Log.i(TAG, "App has the right permissions granted");
@@ -368,27 +343,9 @@ public class MainActivity extends AppCompatActivity implements
         return currentLocation == null || Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > time;
     }
 
-    private void showPermissionsDialog (){
-        Log.i(TAG, "Request permissions to the user");
-        final AppCompatActivity mainActivity = this;
-        AlertDialog permissionDialog = createAlertDialogWithPositiveButtonOnly(
-                R.string.perm_dialog_title,
-                R.string.perm_dialog_message,
-                R.string.perm_dialog_button,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick (DialogInterface dialog, int which) {
-                        String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                        ActivityCompat.requestPermissions(mainActivity, permissions, REQUEST_PERMISSIONS);
-                    }
-                });
-        permissionDialog.show();
-    }
-
     private void requestEnablingProvider (){
         Log.w(TAG, "Request the user to enable the GPS provider");
-        AlertDialog enableGPS = createAlertDialogWithTwoButton(
+        BikeDaCityUtil.createAlertDialogWithTwoButton(this,
                 R.string.enable_provider_title,
                 R.string.enable_provider_message,
                 R.string.enable_provider_positive_button,
@@ -405,8 +362,7 @@ public class MainActivity extends AppCompatActivity implements
                         finish();
                     }
                 }
-        );
-        enableGPS.show();
+        ).show();
     }
 
     @Override
@@ -448,10 +404,10 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onPause (){
+        // TODO we need a BroadcastReceiver to be unregistered
         Log.d(TAG, "onPause() Called");
         super.onPause();
         cityMap.onPause();
-        locationManager.removeUpdates(this);
     }
 
     @Override
