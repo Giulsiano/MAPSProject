@@ -78,9 +78,9 @@ public class MainActivity extends AppCompatActivity implements
 
         ProgressBar progressBar;
         Button refreshMap;
-        MainActivity mainActivity;
+        Context mainActivity;
 
-        public DownloadStationsTask(MainActivity mainActivity){
+        public DownloadStationsTask(Context mainActivity){
             super();
             refreshMap = findViewById(R.id.refreshMap);
             infoBox = findViewById(R.id.infoBox);
@@ -135,14 +135,24 @@ public class MainActivity extends AppCompatActivity implements
                             }
                         }, mainActivity);
                 cityMap.getOverlays().add(stationOverlay);
+
+                // Recreate the RecyclerView list and center the map to the current location
                 stationList.invalidate();
-                stationList.setAdapter(new ShowStationAdapter(mainActivity, stationMap));
+                stationList.setAdapter(new ShowStationAdapter(mainActivity,
+                                                              stationMap,
+                                                              cityMap,
+                                                              showAvailablePlaces));
                 infoBox.setText(res.getString(R.string.infobox_current_location,
                                               currentLocation.getLatitude(),
                                               currentLocation.getLongitude()));
                 progressBar.setVisibility(View.INVISIBLE);
                 refreshMap.setVisibility(View.VISIBLE);
-                centreMapOn(currentLocation.getLatitude(), currentLocation.getLongitude());
+                IMapController controller = cityMap.getController();
+
+                // Need to zoom then center due to a bug in OSMDroid
+                controller.zoomTo(14, 1000L);
+                controller.setCenter(new GeoPoint(currentLocation.getLatitude(),
+                                                  currentLocation.getLongitude()));
             }
         }
 
@@ -344,6 +354,7 @@ public class MainActivity extends AppCompatActivity implements
             else {
                 currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 if (isCurrentLocationOlderThan(OLD_THRESHOLD)){
+                    // TODO delete part of this code since it is useless with locationBroadcastReceiver
                     Log.i(TAG, "Current location is too old. Request a new one");
                     locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER,
                             this,
@@ -418,6 +429,7 @@ public class MainActivity extends AppCompatActivity implements
 
                         }
                         infoBox.setText(getResources().getString(R.string.infobox_waiting_location));
+                        // TODO delete part of this code since it is useless with locationBroadcastReceiver
                         locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER,
                                 this,
                                 null);

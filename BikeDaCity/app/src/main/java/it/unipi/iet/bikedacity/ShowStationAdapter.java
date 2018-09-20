@@ -11,6 +11,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.osmdroid.api.IMapController;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
@@ -19,26 +23,30 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
 
     private TreeMap<Integer, List<CityBikesStation>> dataSource;
     private List<Station> stations;
-    private MainActivity mainActivity;
-    private Button viewOnMap;
+    private Context context;
+    private MapView map;
+    private boolean showAvailablePlaces;
 
-    public ShowStationAdapter (MainActivity ma, TreeMap<Integer, List<CityBikesStation>> distanceMap){
+    public ShowStationAdapter (Context context, TreeMap<Integer, List<CityBikesStation>> distanceMap,
+                               MapView map, boolean showAvailablePlaces){
         dataSource = distanceMap;
         stations = null;
-        this.mainActivity = ma;
+        this.context = context;
+        this.map = map;
+        this.showAvailablePlaces = showAvailablePlaces;
     }
 
     private class Station {
 
         private CityBikesStation station;
-        private float distance;
+        private int distance;
 
-        public Station (CityBikesStation station, float distance){
+        public Station (CityBikesStation station, int distance){
             this.station = station;
             this.distance = distance;
         }
 
-        public float getDistance () {
+        public int getDistance () {
             return distance;
         }
 
@@ -82,11 +90,11 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
 
         // Fill textviews with informations
         final Station station = stations.get(position);
-        Resources res = mainActivity.getResources();
+        Resources res = context.getResources();
         String distance = res.getString(R.string.station_list_distance, station.getDistance());
         String name = station.getCityBikeStation().getName();
         String availability;
-        if (mainActivity.isShowingAvailablePlaces()){
+        if (showAvailablePlaces){
             availability = res.getString(R.string.station_list_availability,
                                          station.getCityBikeStation().getEmptySlots(),
                                          res.getString(R.string.station_list_free_places));
@@ -103,7 +111,11 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
             @Override
             public void onClick (View v) {
                 Location location = station.getCityBikeStation().getLocation();
-                mainActivity.centreMapOn(location.getLatitude(), location.getLongitude());
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                IMapController controller = map.getController();
+                controller.zoomTo(14, 1000L);
+                controller.setCenter(new GeoPoint(latitude, longitude));
             }
         });
     }
