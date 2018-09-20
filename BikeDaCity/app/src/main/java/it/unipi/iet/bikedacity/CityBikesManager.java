@@ -96,7 +96,6 @@ public class CityBikesManager {
             List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.FreePlaceComparator);
 
-            // TODO try to find a way to not prune unavailable stations
             // Prune the map by removing no free place stations
             if (stations.get(0).getFreePlacesLevel() == CityBikesStation.Availability.NO){
                 it.remove();
@@ -133,9 +132,6 @@ public class CityBikesManager {
     }
 
     public class CityBikesDownloader {
-        //
-        //TODO: if there is enough time before delivery try to do a cache manager via external
-        //
         private static final String TAG = "CityBikeDownloader";
         public static final String CITYBIKESAPIURL = "https://api.citybik.es";
         public static final String NETWORKSENDPOINT = "/v2/networks/";
