@@ -56,13 +56,11 @@ public class CityBikesManager {
         for (CityBikesStation station : stations){
             distance = Math.round(location.distanceTo(station.getLocation()));
             if (distanceMap.containsKey(distance)){
-                Log.d("TAG", "Add station to list");
                 List<CityBikesStation> stationList = distanceMap.get(distance);
                 stationList.add(station);
                 distanceMap.put(distance, stationList);
             }
             else {
-                Log.d(TAG, "Add new key: " + distance);
                 LinkedList<CityBikesStation> stationList = new LinkedList<>();
                 stationList.add(station);
                 distanceMap.put(distance, stationList);

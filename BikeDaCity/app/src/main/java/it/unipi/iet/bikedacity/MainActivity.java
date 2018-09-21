@@ -340,16 +340,11 @@ public class MainActivity extends AppCompatActivity implements
                 requestEnablingProvider();
             }
             else {
-                if (currentLocation == null){
-                    currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                    if (isCurrentLocationTooOld()){
-                        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
-                    }
-                }
+                registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
                 int minTime = preferences.getInt(resources.getString(R.string.min_time_key),
                                                  1000);
                 int minDistance = preferences.getInt(resources.getString(R.string.min_dist_key),
-                                                     100);
+                                                     0);
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                                                        minTime,
                                                        minDistance,
@@ -359,7 +354,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private boolean isCurrentLocationTooOld(){
-        return Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > OLD_THRESHOLD;
+        return currentLocation == null ||
+                Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > OLD_THRESHOLD;
     }
 
     private void requestEnablingProvider (){
@@ -388,7 +384,6 @@ public class MainActivity extends AppCompatActivity implements
     public void onResume (){
         super.onResume();
         cityMap.onResume();
-        registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
     }
 
     @Override
@@ -396,6 +391,11 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onPause() Called");
         super.onPause();
         cityMap.onPause();
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
         unregisterReceiver(locationReceiver);
     }
 
