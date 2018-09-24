@@ -15,7 +15,10 @@ import org.osmdroid.views.overlay.OverlayItem;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+// TODO add overlay to the map or it will never be shown
+// TODO replace markers
 public class StationMapManager {
     public static final String TAG = "StationMapManager";
     private static final String MY_CURRENT_LOCATION_TITLE = "I'm here!";
@@ -25,7 +28,7 @@ public class StationMapManager {
     private OverlayItem currentMarkerLocation;
     private ItemizedIconOverlay<OverlayItem> stationOverlay;
 
-    public void OSMapManager (Context ctx, MapView map){
+    public StationMapManager (Context ctx, MapView map){
         this.context = ctx;
         this.map = map;
         this.map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
@@ -34,12 +37,27 @@ public class StationMapManager {
         this.map.setMultiTouchControls(true);
     }
 
+    public MapView getMap () {
+        return map;
+    }
+
     public void onPause (){
         map.onPause();
     }
 
     public void onResume (){
         map.onResume();
+    }
+
+    public List<OverlayItem> buildOverlayItemList (CityBikesStation station, String description,
+                                                   Drawable marker){
+        List<OverlayItem> items = new LinkedList<>();
+        OverlayItem item = new OverlayItem(station.getName(), description,
+                                           new GeoPoint(station.getLocation().getLatitude(),
+                                                        station.getLocation().getLongitude()));
+        item.setMarker(marker);
+        items.add(item);
+        return items;
     }
 
     public List<OverlayItem> buildOverlayItemList (List<CityBikesStation> stations, Drawable marker){
@@ -54,13 +72,11 @@ public class StationMapManager {
         return itemList;
     }
 
-    public List<OverlayItem> buildOverlayItemList (List<CityBikesStation> stations,
-                                                   List<String> descriptions,
+    public List<OverlayItem> buildOverlayItemList (Map<CityBikesStation, String> stations,
                                                    Drawable marker){
         List<OverlayItem> items = new LinkedList<>();
-        Iterator<String> descIt = descriptions.iterator();
-        for (CityBikesStation station : stations){
-            OverlayItem item = new OverlayItem(station.getName(), descIt.next(),
+        for (CityBikesStation station : stations.keySet()){
+            OverlayItem item = new OverlayItem(station.getName(), stations.get(station),
                                                new GeoPoint(station.getLocation().getLatitude(),
                                                             station.getLocation().getLongitude()));
             item.setMarker(marker);
@@ -93,13 +109,9 @@ public class StationMapManager {
         return overlay;
     }
 
-    private ItemizedIconOverlay<OverlayItem> createStationOverlay (List<CityBikesStation> stations,
-                                                                   List<String> descriptions,
+    private ItemizedIconOverlay<OverlayItem> createStationOverlay (Map<CityBikesStation, String> stations,
                                                                    Drawable marker){
-        if (descriptions.size() != stations.size()){
-            throw new IllegalArgumentException("descriptions list have to be the same size of stations");
-        }
-        List<OverlayItem> items = buildOverlayItemList(stations, descriptions, marker);
+        List<OverlayItem> items = buildOverlayItemList(stations, marker);
 
         // Create the overlay which will show the list of items built above
         ItemizedIconOverlay<OverlayItem> overlay = new ItemizedIconOverlay<>(items,
@@ -130,8 +142,7 @@ public class StationMapManager {
         }
     }
 
-    public void addStationMarkers (List<CityBikesStation> stations, List<String> descriptions,
-                                   Drawable marker){
+    public void addStationMarkers (Map<CityBikesStation, String> stations, Drawable marker){
         if (stationOverlay == null){
             stationOverlay = createStationOverlay(stations, marker);
         }
@@ -139,7 +150,6 @@ public class StationMapManager {
             List<OverlayItem> items = buildOverlayItemList(stations, marker);
             stationOverlay.addItems(items);
         }
-
     }
 
     public void removeStationMarkers (List<CityBikesStation> stations){
@@ -155,6 +165,11 @@ public class StationMapManager {
                 }
             }
         }
+    }
+
+    public void removeAllMarker (){
+        if (stationOverlay == null) return;
+        stationOverlay.removeAllItems();
     }
 
     public void removeStationMarker (CityBikesStation station){
@@ -197,10 +212,21 @@ public class StationMapManager {
                             return false;
                         }
                     }, context);
+            map.getOverlays().add(stationOverlay);
         }
         else {
             stationOverlay.addItem(currentMarkerLocation);
         }
+    }
+
+    public void moveTo (Location location){
+        IMapController controller = map.getController();
+
+        // Need to zoom then center due to a bug in OSMDroid
+        controller.animateTo(new GeoPoint(location.getLatitude(),
+                        location.getLongitude()),
+                18.0,
+                500L);
     }
 
     public void removeCurrentLocationMarker (){

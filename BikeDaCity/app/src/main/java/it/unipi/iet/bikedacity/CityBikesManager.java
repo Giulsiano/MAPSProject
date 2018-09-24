@@ -32,6 +32,11 @@ public class CityBikesManager {
         this.city = city;
     }
 
+    public CityBikesManager(){
+        downloader = new CityBikesDownloader();
+        this.city = null;
+    }
+
     public List<CityBikesStation> getStations () {
         return stations;
     }

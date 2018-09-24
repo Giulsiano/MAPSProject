@@ -10,7 +10,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
@@ -32,16 +31,12 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.ItemizedIconOverlay;
-import org.osmdroid.views.overlay.OverlayItem;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 // TODO add setting for location updates
@@ -59,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private SharedPreferences preferences;
     private Resources resources;
-    private MapView cityMap;
+    private StationMapManager mapManager;
     private CityBikesManager cityBikesManager;
     private LocationManager locationManager;
     private Location currentLocation;
@@ -69,7 +64,6 @@ public class MainActivity extends AppCompatActivity implements
     private PendingIntent pendingIntent;
 
     private boolean permissionOk;
-    private List<OverlayItem> mapItems;
     private boolean showAvailablePlaces;
 
     private static final int REQUEST_PERMISSIONS = 0;
@@ -108,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements
             super.onPostExecute(stationMap);
             infoBox.setText(resources.getString(R.string.infobox_adding_stations));
             if (stationMap == null){
-                // Exit the app if there are no stations
+                // Show the problem to the user but still maitain the app active
                 BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
                         R.string.err_dialog_no_city_found_title,
                         R.string.err_dialog_no_city_found_message,
@@ -116,41 +110,74 @@ public class MainActivity extends AppCompatActivity implements
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick (DialogInterface dialog, int which) {
-                                finish();
                             }
                         }).show();
             }
             else {
-                if (mapItems == null || mapItems.isEmpty()){
-                    Log.e(TAG, "No mapItems found");
-                    return;
+                // Create maps of (station, description) based on the availability
+                Map<CityBikesStation, String> noAvailabilityMap = new HashMap<>();
+                Map<CityBikesStation, String> lowAvailabilityMap = new HashMap<>();
+                Map<CityBikesStation, String> mediumAvailabilityMap = new HashMap<>();
+                Map<CityBikesStation, String> highAvailabilityMap = new HashMap<>();
+                String description;
+                for (Integer distance : stationMap.keySet()){
+                    for (CityBikesStation station : stationMap.get(distance)){
+                        Map<CityBikesStation, String> map = null;
+                        String availabilityString = null;
+                        switch ((showAvailablePlaces) ? station.getFreePlacesLevel() :
+                                                        station.getAvailableBikesLevel()){
+                            case NO:
+                                map = noAvailabilityMap;
+                                availabilityString = "NO";
+                                break;
+
+                            case LOW:
+                                map = lowAvailabilityMap;
+                                availabilityString = "Low";
+                                break;
+
+                            case MEDIUM:
+                                map = mediumAvailabilityMap;
+                                availabilityString = "Medium";
+                                break;
+
+                            case HIGH:
+                                map = highAvailabilityMap;
+                                availabilityString = "High";
+                                break;
+                        }
+                        description = resources.getString(R.string.marker_description_available_places,
+                                                          station.getEmptySlots(),
+                                                          distance,
+                                                          availabilityString
+                                );
+                        map.put(station, description);
+                    }
                 }
-                // Fill the map with the marker for the stations and add them to the list
-                ItemizedIconOverlay<OverlayItem> stationOverlay = new ItemizedIconOverlay<>(mapItems,
-                        new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
-                            @Override
-                            public boolean onItemSingleTapUp (int index, OverlayItem item) {
-                                IMapController controller = cityMap.getController();
-                                controller.setCenter(item.getPoint());
-                                return true;
-                            }
-
-                            @Override
-                            public boolean onItemLongPress (int index, OverlayItem item) {
-                                return false;
-                            }
-                        }, context);
-                cityMap.getOverlays().add(stationOverlay);
-
+                // Add markers to the map view choosing the right marker which depends on the availability
+                if (showAvailablePlaces){
+                    mapManager.addStationMarkers(noAvailabilityMap, resources.getDrawable(R.drawable.place_no_availability));
+                    mapManager.addStationMarkers(lowAvailabilityMap, resources.getDrawable(R.drawable.place_low_availability));
+                    mapManager.addStationMarkers(mediumAvailabilityMap, resources.getDrawable(R.drawable.place_medium_availability));
+                    mapManager.addStationMarkers(highAvailabilityMap, resources.getDrawable(R.drawable.place_high_availability));
+                }
+                else {
+                    mapManager.addStationMarkers(noAvailabilityMap, resources.getDrawable(R.drawable.free_bike_no_availability));
+                    mapManager.addStationMarkers(lowAvailabilityMap, resources.getDrawable(R.drawable.free_bike_low_availability));
+                    mapManager.addStationMarkers(mediumAvailabilityMap, resources.getDrawable(R.drawable.free_bike_medium_availability));
+                    mapManager.addStationMarkers(highAvailabilityMap, resources.getDrawable(R.drawable.free_bike_high_availability));
+                }
                 // Recreate the RecyclerView list and center the map to the current location
+                mapManager.addCurrentLocationMarker(currentLocation, resources.getDrawable(R.drawable.current_location));
+                mapManager.moveTo(currentLocation);
                 stationList.invalidate();
                 stationList.setAdapter(new ShowStationAdapter(context,
                                                               stationMap,
-                                                              cityMap,
+                                                              mapManager.getMap(),
                                                               showAvailablePlaces));
                 infoBox.setText(resources.getString(R.string.infobox_current_location,
-                                              currentLocation.getLatitude(),
-                                              currentLocation.getLongitude()));
+                                                    currentLocation.getLatitude(),
+                                                    currentLocation.getLongitude()));
                 progressBar.setVisibility(View.INVISIBLE);
                 refreshMap.setVisibility(View.VISIBLE);
             }
@@ -177,58 +204,21 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         protected TreeMap<Integer, List<CityBikesStation>> doInBackground (Void... voids){
             Log.d(TAG, "doInBackground()");
-            publishProgress(ProgressState.REQUEST_CITY);
-            String city = OSMNominatimService.getCityFrom(currentLocation.getLatitude(),
-                                                          currentLocation.getLongitude());
-            if (city == null) {
-                return null;
+            if (cityBikesManager == null){
+                cityBikesManager = new CityBikesManager();
             }
-            if (cityBikesManager == null) {
-                cityBikesManager = new CityBikesManager(city);
+            String city = cityBikesManager.getCity();
+            if (city == null){
+                publishProgress(ProgressState.REQUEST_CITY);
+                city = OSMNominatimService.getCityFrom(currentLocation.getLatitude(),
+                        currentLocation.getLongitude());
+                if (city == null) return null;
+                else cityBikesManager.setCity(city);
             }
             publishProgress(ProgressState.COMPUTING_DISTANCES);
-            TreeMap<Integer, List<CityBikesStation>> distanceMap = (showAvailablePlaces) ?
+            return (showAvailablePlaces) ?
                     cityBikesManager.getNearestAvailableBikesFrom(currentLocation) :
                     cityBikesManager.getNearestFreePlacesFrom(currentLocation);
-
-            // Create the list of item that will be added to the city map
-            publishProgress(ProgressState.MAKE_STATION_LIST);
-            if (distanceMap != null) {
-                mapItems = new ArrayList<>();
-                for (Integer distance : distanceMap.keySet()){
-                    for (CityBikesStation station : distanceMap.get(distance)){
-                        String description;
-                        Drawable marker;
-                        if (showAvailablePlaces){
-                            description = resources.getString(R.string.marker_description_available_places,
-                                                        station.getEmptySlots(),
-                                                        distance);
-                            marker = resources.getDrawable(R.drawable.ic_local_parking_24px);
-                        }
-                        else {
-                            description = resources.getString(R.string.marker_description_available_bikes,
-                                                        station.getFreeBikes(),
-                                                        distance);
-                            marker = resources.getDrawable(R.drawable.ic_directions_bike_24px);
-                        }
-                        OverlayItem stationItem = new OverlayItem(station.getName(),
-                                description,
-                                new GeoPoint(station.getLocation().getLatitude(),
-                                        station.getLocation().getLongitude()));
-                        stationItem.setMarker(marker);
-                        mapItems.add(stationItem);
-                    }
-                }
-                // Add current location marker also
-                OverlayItem currentLocationItem = new OverlayItem(resources.getString(R.string.marker_my_location_name),
-                                                                  resources.getString(R.string.marker_my_location_description),
-                                                                  new GeoPoint(currentLocation.getLatitude(),
-                                                                        currentLocation.getLongitude())
-                );
-                currentLocationItem.setMarker(resources.getDrawable(R.drawable.ic_place_24px));
-                mapItems.add(currentLocationItem);
-            }
-            return distanceMap;
         }
     }
 
@@ -250,11 +240,7 @@ public class MainActivity extends AppCompatActivity implements
             stationList = findViewById(R.id.stationList);
             stationList.setHasFixedSize(true);
             stationList.setLayoutManager(new LinearLayoutManager(this));
-            cityMap = findViewById(R.id.map);
-            cityMap.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
-            cityMap.setTilesScaledToDpi(true);
-            cityMap.setBuiltInZoomControls(true);
-            cityMap.setMultiTouchControls(true);
+            mapManager = new StationMapManager(this, (MapView) findViewById(R.id.map));
             pendingIntent = createPendingIntent();
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
             permissionOk = false;
@@ -344,7 +330,7 @@ public class MainActivity extends AppCompatActivity implements
                 int minTime = preferences.getInt(resources.getString(R.string.min_time_key),
                                                  1000);
                 int minDistance = preferences.getInt(resources.getString(R.string.min_dist_key),
-                                                     0);
+                                                     10);
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                                                        minTime,
                                                        minDistance,
@@ -383,14 +369,14 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onResume (){
         super.onResume();
-        cityMap.onResume();
+        mapManager.onResume();
     }
 
     @Override
     public void onPause (){
         Log.d(TAG, "onPause() Called");
         super.onPause();
-        cityMap.onPause();
+        mapManager.onPause();
     }
 
     @Override
@@ -420,6 +406,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public class LocationBroadcastReceiver extends BroadcastReceiver {
+
         @Override
         public void onReceive (Context context, Intent intent) {
             if (intent.hasExtra(LocationManager.KEY_LOCATION_CHANGED)) {
@@ -451,13 +438,6 @@ public class MainActivity extends AppCompatActivity implements
         public void onLocationChanged (Context context, Location location){
             currentLocation = location;
             new DownloadStationsTask(context).execute();
-            IMapController controller = cityMap.getController();
-
-            // Need to zoom then center due to a bug in OSMDroid
-            controller.animateTo(new GeoPoint(currentLocation.getLatitude(),
-                                              currentLocation.getLongitude()),
-                                 18.0,
-                                 500L);
         }
 
         public void onProviderEnabled (Context context){
