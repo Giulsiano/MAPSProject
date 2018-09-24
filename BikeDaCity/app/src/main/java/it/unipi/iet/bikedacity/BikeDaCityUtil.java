@@ -34,7 +34,8 @@ public class BikeDaCityUtil {
         return builder.create();
     }
 
-    public static AlertDialog getPermissionsRationaleDialog (final Activity activity, final String[] permissions){
+    public static AlertDialog getPermissionsRationaleDialog (final Activity activity,
+                                                             final String[] permissions){
         return BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(activity,
                 R.string.perm_dialog_title,
                 R.string.perm_dialog_message,
