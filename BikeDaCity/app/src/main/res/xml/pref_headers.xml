@@ -4,7 +4,7 @@
 
     <header
         android:fragment="it.unipi.iet.bikedacity.SettingsActivity$GeneralPreferenceFragment"
-        android:icon="@drawable/ic_map_black_18dp"
+        android:icon="@drawable/view_on_map"
         android:title="@string/pref_header_location" />
 
     <header
