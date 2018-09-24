@@ -155,7 +155,7 @@
     <string name="station_list_free_bikes">bikes</string>
 
     <!-- Marker related strings -->
-    <string name="marker_description_available_places">Available places: %1$d\nDistance: %2$d</string>
+    <string name="marker_description_available_places">Available places: %1$d\nDistance: %2$d\nAvailability: %3$s</string>
     <string name="marker_description_available_bikes">Available bikes: %1$d\nDistance: %2$d</string>
     <string name="marker_my_location_name">Me</string>
     <string name="marker_my_location_description">I\'m here!</string>
