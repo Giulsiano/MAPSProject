@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+// TODO Add vecteezy as source of informations (icon for bicycle)
 // TODO add setting for location updates
 // TODO get settings, reorder of the code
 // TODO add Location Service to respect requirements for settings activity
@@ -56,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements
     private Resources resources;
     private StationMapManager mapManager;
     private CityBikesManager cityBikesManager;
-    private LocationManager locationManager;
     private Location currentLocation;
     private RecyclerView stationList;
     private TextView infoBox;
@@ -156,19 +156,27 @@ public class MainActivity extends AppCompatActivity implements
                 }
                 // Add markers to the map view choosing the right marker which depends on the availability
                 if (showAvailablePlaces){
-                    mapManager.addStationMarkers(noAvailabilityMap, resources.getDrawable(R.drawable.place_no_availability));
-                    mapManager.addStationMarkers(lowAvailabilityMap, resources.getDrawable(R.drawable.place_low_availability));
-                    mapManager.addStationMarkers(mediumAvailabilityMap, resources.getDrawable(R.drawable.place_medium_availability));
-                    mapManager.addStationMarkers(highAvailabilityMap, resources.getDrawable(R.drawable.place_high_availability));
+                    mapManager.replaceStationMarkers(noAvailabilityMap,
+                                            resources.getDrawable(R.drawable.place_no_availability_24dp));
+                    mapManager.replaceStationMarkers(lowAvailabilityMap,
+                                            resources.getDrawable(R.drawable.place_low_availability_24dp));
+                    mapManager.replaceStationMarkers(mediumAvailabilityMap,
+                                            resources.getDrawable(R.drawable.place_medium_availability_24dp));
+                    mapManager.replaceStationMarkers(highAvailabilityMap,
+                                            resources.getDrawable(R.drawable.place_high_availability_24dp));
                 }
                 else {
-                    mapManager.addStationMarkers(noAvailabilityMap, resources.getDrawable(R.drawable.free_bike_no_availability));
-                    mapManager.addStationMarkers(lowAvailabilityMap, resources.getDrawable(R.drawable.free_bike_low_availability));
-                    mapManager.addStationMarkers(mediumAvailabilityMap, resources.getDrawable(R.drawable.free_bike_medium_availability));
-                    mapManager.addStationMarkers(highAvailabilityMap, resources.getDrawable(R.drawable.free_bike_high_availability));
+                    mapManager.replaceStationMarkers(noAvailabilityMap,
+                                        resources.getDrawable(R.drawable.free_bike_no_availability_24dp));
+                    mapManager.replaceStationMarkers(lowAvailabilityMap,
+                                        resources.getDrawable(R.drawable.free_bike_low_availability_24dp));
+                    mapManager.replaceStationMarkers(mediumAvailabilityMap,
+                                        resources.getDrawable(R.drawable.free_bike_medium_availability_24dp));
+                    mapManager.replaceStationMarkers(highAvailabilityMap,
+                                        resources.getDrawable(R.drawable.free_bike_high_availability_24dp));
                 }
                 // Recreate the RecyclerView list and center the map to the current location
-                mapManager.addCurrentLocationMarker(currentLocation, resources.getDrawable(R.drawable.current_location));
+                mapManager.replaceCurrentLocationMarker(currentLocation, resources.getDrawable(R.drawable.current_location));
                 mapManager.moveTo(currentLocation);
                 stationList.invalidate();
                 stationList.setAdapter(new ShowStationAdapter(context,
@@ -217,8 +225,8 @@ public class MainActivity extends AppCompatActivity implements
             }
             publishProgress(ProgressState.COMPUTING_DISTANCES);
             return (showAvailablePlaces) ?
-                    cityBikesManager.getNearestAvailableBikesFrom(currentLocation) :
-                    cityBikesManager.getNearestFreePlacesFrom(currentLocation);
+                    cityBikesManager.getNearestFreePlacesFrom(currentLocation) :
+                    cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
         }
     }
 
@@ -242,7 +250,6 @@ public class MainActivity extends AppCompatActivity implements
             stationList.setLayoutManager(new LinearLayoutManager(this));
             mapManager = new StationMapManager(this, (MapView) findViewById(R.id.map));
             pendingIntent = createPendingIntent();
-            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
             permissionOk = false;
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
             showAvailablePlaces = preferences.getBoolean(resources.getString(R.string.map_default_view_list_key),true);
@@ -321,6 +328,7 @@ public class MainActivity extends AppCompatActivity implements
                             Manifest.permission.WRITE_EXTERNAL_STORAGE}).show();
         }
         else {
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
             Log.i(TAG, "App has the right permissions granted");
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
                 requestEnablingProvider();

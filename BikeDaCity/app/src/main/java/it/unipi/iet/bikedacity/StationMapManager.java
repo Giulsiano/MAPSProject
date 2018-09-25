@@ -10,6 +10,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
+import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.OverlayItem;
 
 import java.util.Iterator;
@@ -17,7 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-// TODO add overlay to the map or it will never be shown
 // TODO replace markers
 public class StationMapManager {
     public static final String TAG = "StationMapManager";
@@ -61,15 +61,15 @@ public class StationMapManager {
     }
 
     public List<OverlayItem> buildOverlayItemList (List<CityBikesStation> stations, Drawable marker){
-        List<OverlayItem> itemList = new LinkedList<>();
+        List<OverlayItem> items = new LinkedList<>();
         for (CityBikesStation station : stations){
             OverlayItem item = new OverlayItem(station.getName(), station.getDescription(),
                                                new GeoPoint(station.getLocation().getLatitude(),
                                                             station.getLocation().getLongitude()));
             item.setMarker(marker);
-            itemList.add(item);
+            items.add(item);
         }
-        return itemList;
+        return items;
     }
 
     public List<OverlayItem> buildOverlayItemList (Map<CityBikesStation, String> stations,
@@ -91,7 +91,7 @@ public class StationMapManager {
         List<OverlayItem> items = buildOverlayItemList(stations, marker);
 
         // Create the overlay which will show the list of items built above
-        ItemizedIconOverlay<OverlayItem> overlay = new ItemizedIconOverlay<OverlayItem>(items,
+        ItemizedIconOverlay<OverlayItem> overlay = new ItemizedIconOverlay<>(items,
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     @Override
                     public boolean onItemSingleTapUp (int index, OverlayItem item) {
@@ -140,6 +140,9 @@ public class StationMapManager {
             List<OverlayItem> items = buildOverlayItemList(stations, marker);
             stationOverlay.addItems(items);
         }
+        if (!map.getOverlays().contains(stationOverlay)){
+            map.getOverlays().add(stationOverlay);
+        }
     }
 
     public void addStationMarkers (Map<CityBikesStation, String> stations, Drawable marker){
@@ -150,15 +153,18 @@ public class StationMapManager {
             List<OverlayItem> items = buildOverlayItemList(stations, marker);
             stationOverlay.addItems(items);
         }
+        if (!map.getOverlays().contains(stationOverlay)){
+            map.getOverlays().add(stationOverlay);
+        }
     }
 
-    public void removeStationMarkers (List<CityBikesStation> stations){
+    public void removeStationMarkers (Iterable<CityBikesStation> stations){
         if (stationOverlay == null || stationOverlay.size() == 0){
             return;
         }
-        if (stations != null && stations.size() != 0){
-            List<OverlayItem> displayedItems = stationOverlay.getDisplayedItems();
-            Iterator<CityBikesStation> stationIt = stations.iterator();
+        Iterator<CityBikesStation> stationIt = stations.iterator();
+        List<OverlayItem> displayedItems = stationOverlay.getDisplayedItems();
+        if (stationIt.hasNext()){
             for (OverlayItem item : displayedItems){
                 if (item.getTitle().equals(stationIt.next().getName())){
                     displayedItems.remove(item);
@@ -167,7 +173,12 @@ public class StationMapManager {
         }
     }
 
-    public void removeAllMarker (){
+    public void replaceStationMarkers (Map<CityBikesStation, String> stations, Drawable marker){
+        removeStationMarkers(stations.keySet());
+        addStationMarkers(stations, marker);
+    }
+
+    public void removeAllMarkers (){
         if (stationOverlay == null) return;
         stationOverlay.removeAllItems();
     }
@@ -217,6 +228,7 @@ public class StationMapManager {
         else {
             stationOverlay.addItem(currentMarkerLocation);
         }
+        setMarkerVisibility(true);
     }
 
     public void moveTo (Location location){
@@ -239,5 +251,21 @@ public class StationMapManager {
     public void replaceCurrentLocationMarker (Location currentLocation, Drawable marker){
         removeCurrentLocationMarker();
         addCurrentLocationMarker(currentLocation, marker);
+    }
+
+    private void setMarkerVisibility (boolean visibility){
+        List<Overlay> overlays = map.getOverlays();
+        if (visibility == true){
+            if (!overlays.contains(stationOverlay)){
+                overlays.add(stationOverlay);
+                map.invalidate();
+            }
+        }
+        else {
+            if (overlays.contains(stationOverlay)){
+                overlays.remove(stationOverlay);
+                map.invalidate();
+            }
+        }
     }
 }
