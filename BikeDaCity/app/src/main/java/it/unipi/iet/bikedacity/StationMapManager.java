@@ -18,7 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-// TODO replace markers
+// TODO Add clearing of tiles for osmdroid
 public class StationMapManager {
     public static final String TAG = "StationMapManager";
     private static final String MY_CURRENT_LOCATION_TITLE = "I'm here!";
@@ -174,6 +174,7 @@ public class StationMapManager {
     }
 
     public void replaceStationMarkers (Map<CityBikesStation, String> stations, Drawable marker){
+        if (stations == null) return;
         removeStationMarkers(stations.keySet());
         addStationMarkers(stations, marker);
     }
@@ -213,7 +214,10 @@ public class StationMapManager {
                         @Override
                         public boolean onItemSingleTapUp (int index, OverlayItem item) {
                             IMapController controller = map.getController();
-                            controller.setCenter(item.getPoint());
+                            controller.animateTo(new GeoPoint(item.getPoint().getLatitude(),
+                                            item.getPoint().getLongitude()),
+                                    18.0,
+                                    500L);
                             Toast.makeText(context, item.getSnippet(), Toast.LENGTH_SHORT).show();
                             return true;
                         }

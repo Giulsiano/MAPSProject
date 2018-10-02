@@ -253,7 +253,7 @@ public class CityBikesManager {
             try {
                 JSONObject cityStations = new JSONObject(downloadContentFrom(CITYBIKESAPIURL + networkEndpoint));
                 JSONArray jsonStations = cityStations.getJSONObject("network")
-                        .getJSONArray("stations");
+                                                     .getJSONArray("stations");
                 for (int i = 0; i < jsonStations.length(); ++i){
                     stations.add(new CityBikesStation(jsonStations.getJSONObject(i)));
                 }

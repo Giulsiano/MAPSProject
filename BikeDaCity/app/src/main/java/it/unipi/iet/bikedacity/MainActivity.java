@@ -39,12 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-// TODO Add vecteezy as source of informations (icon for bicycle)
-// TODO add setting for location updates
-// TODO get settings, reorder of the code
-// TODO add Location Service to respect requirements for settings activity
-// TODO new marker for availability (need Inkscape)
-// TODO use onSaveInstateState to save simple values
+// TODO Menu key for cleaning osmdroid tiles (?)
+// TODO get settings
+// TODO Save showAvailablePlaces on calling onSaveInstaces
+// TODO
 
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
@@ -62,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextView infoBox;
     private LocationBroadcastReceiver locationReceiver;
     private PendingIntent pendingIntent;
+    private BuildStationMapTask task;
 
     private boolean permissionOk;
     private boolean showAvailablePlaces;
@@ -75,15 +74,16 @@ public class MainActivity extends AppCompatActivity implements
         MAKE_STATION_LIST
     }
 
-    private class DownloadStationsTask extends AsyncTask<Void, ProgressState, TreeMap<Integer, List<CityBikesStation>>> {
+    private class BuildStationMapTask extends AsyncTask<Void, ProgressState,
+                                                        TreeMap<Integer, List<CityBikesStation>>> {
 
         ProgressBar progressBar;
         Button refreshMap;
         Context context;
 
-        public DownloadStationsTask (Context ctx){
+        public BuildStationMapTask (Context ctx){
             super();
-            refreshMap = findViewById(R.id.refreshMap);
+            refreshMap = findViewById(R.id.refreshMapButton);
             infoBox = findViewById(R.id.infoBox);
             progressBar = findViewById(R.id.indeterminateBar);
             this.context = ctx;
@@ -115,10 +115,21 @@ public class MainActivity extends AppCompatActivity implements
             }
             else {
                 // Create maps of (station, description) based on the availability
-                Map<CityBikesStation, String> noAvailabilityMap = new HashMap<>();
-                Map<CityBikesStation, String> lowAvailabilityMap = new HashMap<>();
-                Map<CityBikesStation, String> mediumAvailabilityMap = new HashMap<>();
-                Map<CityBikesStation, String> highAvailabilityMap = new HashMap<>();
+                Map<CityBikesStation, String> noAvailabilityMap = null;
+                Map<CityBikesStation, String> lowAvailabilityMap = null;
+                Map<CityBikesStation, String> mediumAvailabilityMap = null;
+                Map<CityBikesStation, String> highAvailabilityMap = null;
+                switch (preferences.getInt(resources.getString(R.string.default_view_station_key), 2)){
+                    case 3:
+                        noAvailabilityMap = new HashMap<>();
+                    case 2:
+                        lowAvailabilityMap = new HashMap<>();
+                    case 1:
+                        mediumAvailabilityMap = new HashMap<>();
+                    case 0:
+                        highAvailabilityMap = new HashMap<>();
+                        break;
+                }
                 String description;
                 for (Integer distance : stationMap.keySet()){
                     for (CityBikesStation station : stationMap.get(distance)){
@@ -176,7 +187,8 @@ public class MainActivity extends AppCompatActivity implements
                                         resources.getDrawable(R.drawable.free_bike_high_availability_24dp));
                 }
                 // Recreate the RecyclerView list and center the map to the current location
-                mapManager.replaceCurrentLocationMarker(currentLocation, resources.getDrawable(R.drawable.current_location));
+                mapManager.replaceCurrentLocationMarker(currentLocation,
+                                                        resources.getDrawable(R.drawable.current_location));
                 mapManager.moveTo(currentLocation);
                 stationList.invalidate();
                 stationList.setAdapter(new ShowStationAdapter(context,
@@ -212,6 +224,8 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         protected TreeMap<Integer, List<CityBikesStation>> doInBackground (Void... voids){
             Log.d(TAG, "doInBackground()");
+            progressBar.setVisibility(View.VISIBLE);
+            refreshMap.setVisibility(View.INVISIBLE);
             if (cityBikesManager == null){
                 cityBikesManager = new CityBikesManager();
             }
@@ -252,7 +266,8 @@ public class MainActivity extends AppCompatActivity implements
             pendingIntent = createPendingIntent();
             permissionOk = false;
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            showAvailablePlaces = preferences.getBoolean(resources.getString(R.string.map_default_view_list_key),true);
+            showAvailablePlaces = preferences.getBoolean(resources.getString(R.string.map_default_view_list_key),
+                                                                             true);
         }
         else {
             BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
@@ -270,7 +285,8 @@ public class MainActivity extends AppCompatActivity implements
 
     private PendingIntent createPendingIntent () {
         Intent intent = new Intent(CHANGE_LOCATION_ACTION);
-        return PendingIntent.getBroadcast(getApplicationContext(), REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getBroadcast(getApplicationContext(), REQUEST_CODE, intent,
+                                          PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     @Override
@@ -309,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onCreateOptionsMenu (Menu menu) {
         super.onCreateOptionsMenu(menu);
         MenuInflater mi = getMenuInflater();
-        mi.inflate(R.menu.mainmenu, menu);
+        mi.inflate(R.menu.main_menu, menu);
         return true;
     }
 
@@ -335,13 +351,11 @@ public class MainActivity extends AppCompatActivity implements
             }
             else {
                 registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
-                int minTime = preferences.getInt(resources.getString(R.string.min_time_key),
-                                                 1000);
-                int minDistance = preferences.getInt(resources.getString(R.string.min_dist_key),
-                                                     10);
+                int minTime = preferences.getInt(resources.getString(R.string.location_interval_list_key),
+                                                 10000);
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                                                        minTime,
-                                                       minDistance,
+                                                       0,
                                                        pendingIntent);
             }
         }
@@ -411,6 +425,7 @@ public class MainActivity extends AppCompatActivity implements
 
     public void refreshMap (View v){
         // TODO implement the refreshing of the map, it could require some changes on design
+        locationReceiver.onLocationChanged(this, currentLocation);
     }
 
     public class LocationBroadcastReceiver extends BroadcastReceiver {
@@ -418,8 +433,7 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         public void onReceive (Context context, Intent intent) {
             if (intent.hasExtra(LocationManager.KEY_LOCATION_CHANGED)) {
-                Location location = (Location)
-                        intent.getExtras().get(LocationManager.KEY_LOCATION_CHANGED);
+                Location location = (Location) intent.getExtras().get(LocationManager.KEY_LOCATION_CHANGED);
                 onLocationChanged(context, location);
             }
             else if (intent.hasExtra(LocationManager.KEY_PROVIDER_ENABLED)) {
@@ -445,7 +459,13 @@ public class MainActivity extends AppCompatActivity implements
 
         public void onLocationChanged (Context context, Location location){
             currentLocation = location;
-            new DownloadStationsTask(context).execute();
+
+            // It could happen a location update before the task has finished its job. This could potentially
+            // make a new task running and concurrently changing the data structures of the map.
+            if (task == null || task.getStatus() != AsyncTask.Status.RUNNING){
+                task = new BuildStationMapTask(context);
+                task.execute();
+            }
         }
 
         public void onProviderEnabled (Context context){
