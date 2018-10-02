@@ -30,6 +30,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
@@ -266,8 +267,7 @@ public class MainActivity extends AppCompatActivity implements
             pendingIntent = createPendingIntent();
             permissionOk = false;
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            showAvailablePlaces = preferences.getBoolean(resources.getString(R.string.map_default_view_list_key),
-                                                                             true);
+            showAvailablePlaces = preferences.getBoolean(resources.getString(R.string.map_default_view_list_key), true);
         }
         else {
             BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
@@ -352,11 +352,16 @@ public class MainActivity extends AppCompatActivity implements
             else {
                 registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
                 int minTime = preferences.getInt(resources.getString(R.string.location_interval_list_key),
-                                                 10000);
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                                                       minTime,
-                                                       0,
-                                                       pendingIntent);
+                        10000);
+                if (minTime == 0){
+                    locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
+                }
+                else {
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                            minTime,
+                            0,
+                            pendingIntent);
+                }
             }
         }
     }
@@ -465,6 +470,14 @@ public class MainActivity extends AppCompatActivity implements
             if (task == null || task.getStatus() != AsyncTask.Status.RUNNING){
                 task = new BuildStationMapTask(context);
                 task.execute();
+            }
+            if (task.getStatus() == AsyncTask.Status.RUNNING){
+                Toast.makeText(context, resources.getString(R.string.toast_running_task),
+                               Toast.LENGTH_SHORT).show();
+            }
+            if (task.getStatus() == AsyncTask.Status.PENDING){
+                Toast.makeText(context, resources.getString(R.string.toast_pending_task),
+                               Toast.LENGTH_SHORT).show();
             }
         }
 

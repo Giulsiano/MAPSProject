@@ -64,6 +64,9 @@
     <string name="infobox_waiting_location">Waiting for location update&#8230;</string>
     <string name="infobox_make_stations">Making stations for the map&#8230;</string>
 
+    <!-- Information toast related string -->
+    <string name="toast_running_task">A task is running. Wait for it to finish.</string>
+    <string name="toast_pending_task">A task is pending. Wait for it to finish.</string>
 
     <!-- Station list contents -->
     <string name="station_list_distance">Distance: %1$d m</string>

@@ -7,6 +7,7 @@
     <!-- Location settings -->
     <string name="pref_location_interval_title">Location update time</string>
     <string-array name="pref_interval_location_entries">
+        <item>Manually</item>
         <item>1 second</item>
         <item>5 seconds</item>
         <item>10 seconds</item>
@@ -15,6 +16,7 @@
     </string-array>
     <string-array name="pref_interval_location_values">
         <!-- these values are in milliseconds -->
+        <item>0</item>
         <item>1000</item>
         <item>5000</item>
         <item>10000</item>
