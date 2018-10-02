@@ -10,95 +10,13 @@
     <string name="info_source_title">Information Sources</string>
     <string name="source_name_1">CityBikes</string>
     <string name="source_name_2">OSMDroid</string>
+    <string name="source_name_3">Nominatim Service</string>
+    <string name="source_name_4">Bicycle Icon</string>
     <string name="source_site_1">citybik.es</string>
     <string name="source_site_2">github.com/osmdroid/osmdroid/</string>
+    <string name="source_site_3">nominatim.openstreetmap.org</string>
+    <string name="source_site_4">www.vecteezy.com</string>
     <string name="title_activity_about">About</string>
-
-    <!-- Strings related to Settings -->
-    <string name="title_activity_settings">Settings</string>
-    <string name="pref_header_location">Location Settings</string>
-    <string name="pref_header_map">Map Settings</string>
-
-    <!-- Location settings -->
-    <string name="pref_location_interval_title">Set interval duration</string>
-    <string-array name="pref_interval_location_entries">
-        <item>5 seconds</item>
-        <item>30 seconds</item>
-        <item>1 minute</item>
-    </string-array>
-    <string-array name="pref_interval_location_values">
-        <item>5</item>
-        <item>30</item>
-        <item>60</item>
-    </string-array>
-
-    <!-- Map settings -->
-    <string-array name="pref_map_provider_entries">
-        <item>Google Map App</item>
-        <item>Open Street Map App</item>
-        <item>OSMDroid</item>
-    </string-array>
-    <string-array name="pref_map_provider_values">
-        <item>-1</item>
-        <item>0</item>
-        <item>1</item>
-    </string-array>
-
-    <string-array name="list_preference_entry_values">
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-    </string-array>
-
-    <string-array name="pref_default_view_entries">
-        <item>Available places</item>
-        <item>Free bikes</item>
-    </string-array>
-    <string-array name="pref_default_view_values">
-        <item>0</item>
-        <item>1</item>
-    </string-array>
-
-    <string-array name="pref_map_refresh_entries" >
-        <item>5 seconds</item>
-        <item>10 seconds</item>
-        <item>15 seconds</item>
-        <item>30 seconds</item>
-    </string-array>
-    <string-array name="pref_map_refresh_values" >
-        <item>5</item>
-        <item>10</item>
-        <item>15</item>
-        <item>30</item>
-    </string-array>
-
-    <!-- Key used for shared preferences -->
-    <string name="location_switch_key">location_switch</string>
-    <string name="location_interval_list_key">location_interval_list</string>
-    <string name="map_provider_list_key">map_provider_list_key</string>
-    <string name="map_default_view_list_key">default_view</string>
-    <string name="map_refresh_switch_key">map_referesh_switch</string>
-    <string name="map_refresh_list_key">map_refresh</string>
-    <string name="min_time_key">minTime</string>
-    <string name="min_dist_key">minDistance</string>
-
-    <!-- Titles -->
-    <string name="pref_title_location">Enable location service</string>
-    <string name="pref_location_category_name">Location</string>
-    <string name="pref_map_category_name">Map Settings</string>
-    <string name="pref_map_provider_title">Map Provider</string>
-    <string name="pref_map_refresh_switch_title">Enable autorefresh</string>
-    <string name="pref_default_view_title">Default map view</string>
-    <string name="pref_map_refresh_title">Autorefresh interval</string>
-
-    <!-- Summaries -->
-    <string name="pref_location_summary">Enable this if you want to request your location when the
-        interval specified is elapsed instead of every time this app is started.</string>
-    <string name="google_map_app_summary">Use Google Map application</string>
-    <string name="osm_app_summary">Use Open Street Map application</string>
-    <string name="osmdroid_app_summary">Use the OSMDroid library with more features</string>
-    <string name="map_refresh_summary">Enable this for autorefreshing the map</string>
-    <string name="default_view_summary">Select the view you use more frequently</string>
 
     <!-- URLs -->
     <string name="nominatim_service_query">https://nominatim.openstreetmap.org/reverse?format=json

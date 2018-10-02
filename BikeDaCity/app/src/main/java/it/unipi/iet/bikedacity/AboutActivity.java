@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
+
 public class AboutActivity extends AppCompatActivity {
 
     @Override
@@ -32,6 +33,16 @@ public class AboutActivity extends AppCompatActivity {
             case R.id.source_name_2:
             case R.id.source_site_2:
                 url += getResources().getString(R.string.source_site_2);
+                break;
+
+            case R.id.source_name_3:
+            case R.id.source_site_3:
+                url += getResources().getString(R.string.source_site_3);
+                break;
+
+            case R.id.source_name_4:
+            case R.id.source_site_4:
+                url += getResources().getString(R.string.source_site_4);
                 break;
         }
         Intent browserIntent = new Intent(Intent.ACTION_VIEW);

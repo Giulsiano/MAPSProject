@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_activity_settings">Settings</string>
+    <string name="pref_header_location">Location Settings</string>
+    <string name="pref_header_map">Map Settings</string>
+
+    <!-- Location settings -->
+    <string name="pref_location_interval_title">Location update time</string>
+    <string-array name="pref_interval_location_entries">
+        <item>1 second</item>
+        <item>5 seconds</item>
+        <item>10 seconds</item>
+        <item>20 seconds</item>
+        <item>30 seconds</item>
+    </string-array>
+    <string-array name="pref_interval_location_values">
+        <!-- these values are in milliseconds -->
+        <item>1000</item>
+        <item>5000</item>
+        <item>10000</item>
+        <item>20000</item>
+        <item>30000</item>
+    </string-array>
+
+    <!-- Map settings -->
+    <string-array name="pref_default_view_entries">
+        <item>Available places</item>
+        <item>Free bikes</item>
+    </string-array>
+    <string-array name="pref_default_view_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <string-array name="pref_view_station_entries">
+        <item>High availability only</item>
+        <item>Up to medium availability</item>
+        <item>Up to low availability</item>
+        <item>All availability</item>
+    </string-array>
+    <string-array name="pref_view_station_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <!-- Key used for shared preferences -->
+    <string name="default_view_station_key">default_station_view</string>
+    <string name="location_interval_list_key">location_interval_list</string>
+    <string name="map_default_view_list_key">default_view</string>
+    <string name="show_available_places">show_available_places</string>
+
+    <!-- Titles -->
+    <string name="pref_location_category_name">Location Settings</string>
+    <string name="pref_map_category_name">Map Settings</string>
+    <string name="pref_default_view_title">Default map view</string>
+    <string name="pref_view_station_title">Show stations on map</string>
+
+    <!-- Summaries -->
+    <string name="default_view_summary">Select the view you use more frequently</string>
+    <string name="pref_location_interval_summary">After how many seconds the app update the location</string>
+    <string name="pref_view_station_default_summary">%1$s</string>
+</resources>

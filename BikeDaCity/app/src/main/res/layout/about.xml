@@ -3,68 +3,68 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/aboutCostraintLayout"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginLeft="8dp"
-    android:layout_marginRight="8dp"
     android:layout_marginTop="8dp"
+    android:layout_marginRight="8dp"
     android:gravity="top|left"
-    tools:context=".MainActivity">
+    tools:context=".AboutActivity">
 
+    <!-- Developer part -->
     <TextView
         android:id="@+id/devel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
         android:layout_marginStart="4dp"
         android:layout_marginTop="4dp"
+        android:layout_marginEnd="4dp"
         android:onClick="sendEmail"
         android:text="@string/devel_title"
         android:textSize="16sp"
-        app:layout_constraintBottom_toTopOf="@+id/devel_name"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="spread" />
+        app:layout_constraintVertical_chainStyle="spread_inside" />
 
     <TextView
         android:id="@+id/devel_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="64dp"
+        android:layout_height="13dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="4dp"
         android:onClick="sendEmail"
         android:text="@string/devel_name"
         android:textSize="10sp"
-        app:layout_constraintBottom_toTopOf="@+id/devel_email"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/devel" />
 
+    <!-- Developer email part -->
     <TextView
         android:id="@+id/devel_email"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="4dp"
         android:onClick="sendEmail"
         android:text="@string/devel_email"
         android:textSize="10sp"
-        app:layout_constraintBottom_toTopOf="@+id/info_sources"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/devel_name" />
 
+    <!-- Info resources part -->
     <TextView
         android:id="@+id/info_sources"
         android:layout_width="364dp"
         android:layout_height="23dp"
-        android:layout_marginEnd="4dp"
         android:layout_marginStart="4dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="4dp"
         android:text="@string/info_source_title"
         android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@+id/source_name_1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/devel_email" />
@@ -77,7 +77,6 @@
         android:layout_marginTop="4dp"
         android:text="@string/source_name_1"
         android:textSize="16sp"
-        app:layout_constraintBottom_toTopOf="@+id/source_site_1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -87,12 +86,10 @@
         android:id="@+id/source_site_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="25dp"
         android:layout_marginStart="8dp"
         android:onClick="openSite"
         android:text="@string/source_site_1"
         android:textSize="10sp"
-        app:layout_constraintBottom_toTopOf="@+id/source_site_2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -119,10 +116,62 @@
         android:onClick="openSite"
         android:text="@string/source_site_2"
         android:textSize="10sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/source_name_2" />
+
+    <TextView
+        android:id="@+id/source_name_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:text="@string/source_name_3"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/source_site_2" />
+
+    <TextView
+        android:id="@+id/source_site_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:onClick="openSite"
+        android:text="@string/source_site_3"
+        android:textSize="10sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/source_name_3" />
+
+    <TextView
+        android:id="@+id/source_name_4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:text="@string/source_name_4"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/source_site_3" />
+
+    <TextView
+        android:id="@+id/source_site_4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:onClick="openSite"
+        android:text="@string/source_site_4"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/source_name_4" />
 
 </android.support.constraint.ConstraintLayout>

@@ -3,50 +3,23 @@
     <PreferenceCategory
         android:title="@string/pref_location_category_name"
         android:key="pref_key_location_setting">
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="@string/location_switch_key"
-            android:title="@string/pref_title_location" />
 
         <ListPreference
-            android:defaultValue="30"
+            android:defaultValue="10"
             android:entries="@array/pref_interval_location_entries"
             android:entryValues="@array/pref_interval_location_values"
             android:key="@string/location_interval_list_key"
             android:negativeButtonText="@null"
             android:positiveButtonText="@null"
             android:title="@string/pref_location_interval_title"
-            android:dependency="@string/location_switch_key"/>
+            android:summary="@string/pref_location_interval_summary"/>
+
     </PreferenceCategory>
 
     <!-- MAP -->
     <PreferenceCategory
         android:title="@string/pref_map_category_name"
         android:key="pref_map_category_key">
-        <ListPreference
-            android:defaultValue="1"
-            android:entries="@array/pref_map_provider_entries"
-            android:entryValues="@array/pref_map_provider_values"
-            android:key="@string/map_provider_list_key"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:title="@string/pref_map_provider_title" />
-
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="@string/map_refresh_switch_key"
-            android:summary="@string/map_refresh_summary"
-            android:title="@string/pref_map_refresh_switch_title" />
-
-        <ListPreference
-            android:defaultValue="15"
-            android:entries="@array/pref_map_refresh_entries"
-            android:entryValues="@array/pref_map_refresh_values"
-            android:key="@string/map_refresh_list_key"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:title="@string/pref_map_refresh_title"
-            android:dependency="@string/map_refresh_switch_key"/>
 
         <ListPreference
             android:defaultValue="0"
@@ -57,6 +30,17 @@
             android:positiveButtonText="@null"
             android:title="@string/pref_default_view_title"
             android:summary="@string/default_view_summary"/>
+
+        <ListPreference
+            android:defaultValue="2"
+            android:entries="@array/pref_view_station_entries"
+            android:entryValues="@array/pref_view_station_values"
+            android:key="@string/default_view_station_key"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:title="@string/pref_view_station_title"
+            android:summary="@string/pref_view_station_default_summary"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>
