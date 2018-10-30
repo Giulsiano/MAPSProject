@@ -8,7 +8,7 @@
     tools:context=".MainActivity">
 
     <ProgressBar
-        android:id="@+id/indeterminateBar"
+        android:id="@+id/indeterminate_bar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="fill_parent"
         android:layout_height="9dp"
@@ -16,47 +16,74 @@
 
     <TextView
         android:id="@+id/infoBox"
-        android:layout_width="344dp"
+        android:layout_width="0dp"
         android:layout_height="16dp"
-        android:layout_marginBottom="2dp"
+        android:layout_marginStart="4dp"
         android:layout_marginTop="2dp"
+        android:layout_marginEnd="4dp"
         android:text=""
         android:textSize="12sp"
-        app:layout_constraintBottom_toTopOf="@+id/map"
-        app:layout_constraintEnd_toStartOf="@+id/refreshMap"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/indeterminateBar" />
-
-    <Button
-        android:id="@+id/refreshMap"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
-        android:layout_marginBottom="2dp"
-        android:layout_marginTop="2dp"
-        android:background="@drawable/refresh"
-        android:onClick="refreshMap"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/map"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/infoBox"
-        app:layout_constraintTop_toBottomOf="@+id/indeterminateBar" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/indeterminate_bar" />
 
     <org.osmdroid.views.MapView
         android:id="@+id/map"
-        android:layout_width="384dp"
-        android:layout_height="323dp"
+        android:layout_width="0dp"
+        android:layout_height="356dp"
+        android:layout_marginTop="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/infoBox" />
+
+    <Button
+        android:id="@+id/view_overlay_button"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/ic_notifications_black_24dp"
+        android:onClick="addVisibleOverlay"
+        android:visibility="visible"
+        app:layout_constraintEnd_toStartOf="@+id/my_location_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/map" />
+
+    <Button
+        android:id="@+id/my_location_button"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/ic_place_black_24dp"
+        android:onClick="centreMapOnCurrentLocation"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/refreshMap"/>
+        app:layout_constraintTop_toBottomOf="@+id/map" />
+
+    <Button
+        android:id="@+id/refresh_map_button"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/refresh_map_24px"
+        android:onClick="refreshMap"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/my_location_button"
+        app:layout_constraintTop_toBottomOf="@+id/map" />
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/stationList"
+        android:id="@+id/station_list"
         android:layout_width="383dp"
-        android:layout_height="183dp"
+        android:layout_height="97dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/map"
-        app:layout_constraintTop_toBottomOf="@+id/map" />
+        app:layout_constraintTop_toBottomOf="@+id/my_location_button" />
 
 </android.support.constraint.ConstraintLayout>
