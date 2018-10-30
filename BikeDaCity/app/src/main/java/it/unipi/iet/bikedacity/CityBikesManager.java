@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -49,15 +50,15 @@ public class CityBikesManager {
         city = c;
     }
 
-    private TreeMap<Integer, List<CityBikesStation>> getStationsOrderedByDistanceFrom (Location location){
-        // Use a TreeMap that implements SortedMap interface to automatically obtain an ordered map
-        int distance;
-        TreeMap<Integer, List<CityBikesStation>> distanceMap = new TreeMap<>();
+    private SortedMap<Integer, List<CityBikesStation>> getStationsOrderedByDistanceFrom (Location location){
         Log.i(TAG, "Order stations by distance");
         if (stations == null){
             Log.d(TAG, "Station object is null. Downloading stations");
             stations = downloader.getStationsOf(city);
         }
+        int distance;
+        // Use a TreeMap that implements SortedMap interface to automatically obtain an ordered map
+        TreeMap<Integer, List<CityBikesStation>> distanceMap = new TreeMap<>();
         for (CityBikesStation station : stations){
             distance = Math.round(location.distanceTo(station.getLocation()));
             if (distanceMap.containsKey(distance)){
@@ -81,7 +82,7 @@ public class CityBikesManager {
      * @return  An ordered by distance Map (TreeMap in this case) which contains the list of stations ordered by
      * availability. This method will return null if the location is null itself.
      */
-    public TreeMap<Integer, List<CityBikesStation>> getNearestFreePlacesFrom (Location location){
+    public SortedMap<Integer, List<CityBikesStation>> getNearestFreePlacesFrom (Location location){
         Log.i(TAG, "Get nearest station with free places available");
         if (location == null){
             Log.e(TAG, "Location passed is null");
@@ -92,22 +93,17 @@ public class CityBikesManager {
             return null;
         }
         // Order the station by their free place availability
-        TreeMap<Integer, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
+        SortedMap<Integer, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
         Log.i(TAG,"Ordering the list of stations by availability");
         for (Iterator<Integer> it = distanceMap.keySet().iterator(); it.hasNext();){
             Integer distance = it.next();
             List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.FreePlaceComparator);
-
-            // Prune the map by removing no free place stations
-            if (stations.get(0).getFreePlacesLevel() == CityBikesStation.Availability.NO){
-                it.remove();
-            }
         }
         return distanceMap;
     }
 
-    public TreeMap<Integer, List<CityBikesStation>> getNearestAvailableBikesFrom (Location location){
+    public SortedMap<Integer, List<CityBikesStation>> getNearestAvailableBikesFrom (Location location){
         Log.i(TAG, "Get nearest station with available bikes");
         if (location == null){
             Log.e(TAG, "Location passed is null");
@@ -118,18 +114,12 @@ public class CityBikesManager {
             return null;
         }
         // Order the station by their free place availability
-        TreeMap<Integer, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
+        SortedMap<Integer, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
         Log.i(TAG,"Ordering the list of stations by availability");
         for (Iterator<Integer> it = distanceMap.keySet().iterator(); it.hasNext();){
             Integer distance = it.next();
             List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.AvailableBikesComparator);
-
-            // Prune the map by removing no available bikes stations
-            if (stations.get(0).getAvailableBikesLevel() == CityBikesStation.Availability.NO){
-                it.remove();
-            }
-
         }
         return distanceMap;
     }
@@ -252,8 +242,7 @@ public class CityBikesManager {
             }
             try {
                 JSONObject cityStations = new JSONObject(downloadContentFrom(CITYBIKESAPIURL + networkEndpoint));
-                JSONArray jsonStations = cityStations.getJSONObject("network")
-                                                     .getJSONArray("stations");
+                JSONArray jsonStations = cityStations.getJSONObject("network").getJSONArray("stations");
                 for (int i = 0; i < jsonStations.length(); ++i){
                     stations.add(new CityBikesStation(jsonStations.getJSONObject(i)));
                 }
