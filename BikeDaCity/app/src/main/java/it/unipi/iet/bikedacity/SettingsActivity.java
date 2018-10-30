@@ -22,9 +22,7 @@ import android.preference.PreferenceManager;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-// TODO add setting for location updates interval
 // TODO add setting for map clearing tile
-//
 public class SettingsActivity extends Activity {
     private static String TAG = "SettingsActivity";
     /**
@@ -33,7 +31,7 @@ public class SettingsActivity extends Activity {
      */
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
         @Override
-        public boolean onPreferenceChange(Preference preference, Object value) {
+        public boolean onPreferenceChange (Preference preference, Object value) {
             String stringValue = value.toString();
             Resources res = preference.getContext().getResources();
 
@@ -71,20 +69,17 @@ public class SettingsActivity extends Activity {
      *
      * @see #sBindPreferenceSummaryToValueListener
      */
-    private static void bindPreferenceSummaryToValue(Preference preference) {
+    private static void bindPreferenceSummaryToValue (Preference preference) {
         // Set the listener to watch for value changes.
         preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-
-        // Trigger the listener immediately with the preference's
-        // current value.
         sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                PreferenceManager
-                        .getDefaultSharedPreferences(preference.getContext())
-                        .getString(preference.getKey(), ""));
+                                        PreferenceManager.getDefaultSharedPreferences(preference.getContext())
+                                                         .getString(preference.getKey(), "")
+        );
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getFragmentManager().beginTransaction()
                             .replace(android.R.id.content, new GeneralPreferenceFragment())
@@ -98,13 +93,13 @@ public class SettingsActivity extends Activity {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class GeneralPreferenceFragment extends PreferenceFragment {
         @Override
-        public void onCreate(Bundle savedInstanceState) {
+        public void onCreate (Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
             Resources res = this.getResources();
 
             // For changing the summary when the user changes the value of the option
-            bindPreferenceSummaryToValue(findPreference(res.getString(R.string.map_default_view_list_key)));
+            bindPreferenceSummaryToValue(findPreference(res.getString(R.string.default_view_list_key)));
             bindPreferenceSummaryToValue(findPreference(res.getString(R.string.location_interval_list_key)));
             bindPreferenceSummaryToValue(findPreference(res.getString(R.string.default_view_station_key)));
         }
