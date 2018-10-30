@@ -17,17 +17,17 @@ import org.osmdroid.views.MapView;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.TreeMap;
+import java.util.SortedMap;
 
 public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.StationViewHolder>{
 
-    private TreeMap<Integer, List<CityBikesStation>> dataSource;
+    private SortedMap<Integer, List<CityBikesStation>> dataSource;
     private List<Station> stations;
     private Context context;
     private MapView map;
     private boolean showAvailablePlaces;
 
-    public ShowStationAdapter (Context context, TreeMap<Integer, List<CityBikesStation>> distanceMap,
+    public ShowStationAdapter (Context context, SortedMap<Integer, List<CityBikesStation>> distanceMap,
                                MapView map, boolean showAvailablePlaces){
         dataSource = distanceMap;
         stations = null;
