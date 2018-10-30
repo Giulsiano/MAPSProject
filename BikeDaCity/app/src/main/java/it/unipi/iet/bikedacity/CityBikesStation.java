@@ -44,8 +44,8 @@ public class CityBikesStation {
         location.setAccuracy(0.0f);
         freeBikes = jsonObject.getInt("free_bikes");
         emptySlots = jsonObject.getInt("empty_slots");
-        lowThreshold = Math.min(2, (freeBikes + emptySlots) >> 3);
-        mediumThreshold = Math.min(4, (freeBikes + emptySlots) >> 2);
+        lowThreshold = Math.max(2, (freeBikes + emptySlots) >> 3);
+        mediumThreshold = Math.max(4, (freeBikes + emptySlots) >> 2);
         JSONObject extra;
         try {
             extra = (JSONObject) jsonObject.get("extra");
