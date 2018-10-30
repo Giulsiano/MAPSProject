@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
@@ -35,15 +36,16 @@ import android.widget.Toast;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.MapView;
 
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.SortedMap;
 
 // TODO Menu key for cleaning osmdroid tiles (?)
 // TODO get settings
 // TODO Save showAvailablePlaces on calling onSaveInstaces
-// TODO
 
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
@@ -51,42 +53,56 @@ public class MainActivity extends AppCompatActivity implements
     private static final String TAG = "MainActivity";
     private static final String CHANGE_LOCATION_ACTION = "it.unipi.iet.bikedacity.CHANGE_LOCATION";
     private static final int REQUEST_CODE = 0;
-
     private SharedPreferences preferences;
     private Resources resources;
     private StationMapManager mapManager;
     private CityBikesManager cityBikesManager;
     private Location currentLocation;
-    private RecyclerView stationList;
+    private RecyclerView stationListView;
     private TextView infoBox;
+    private MenuItem showOptionItem;
     private LocationBroadcastReceiver locationReceiver;
     private PendingIntent pendingIntent;
     private BuildStationMapTask task;
+    private Map<OverlayAvailability, String> overlayNames;
+    private Map<OverlayAvailability, Drawable> overlayDrawables;
+    private Drawable[] showOptionButtonBackgrounds;
 
     private boolean permissionOk;
     private boolean showAvailablePlaces;
+    private int visibleOverlayCounter;
 
     private static final int REQUEST_PERMISSIONS = 0;
     private static final long OLD_THRESHOLD = 1*60*1000;
 
-    enum ProgressState{
+    private enum ProgressState {
         REQUEST_CITY,
         COMPUTING_DISTANCES,
         MAKE_STATION_LIST
     }
 
-    private class BuildStationMapTask extends AsyncTask<Void, ProgressState,
-                                                        TreeMap<Integer, List<CityBikesStation>>> {
+    // Ordered by crescent priority
+    private enum OverlayAvailability{
+        NO_AVAILABILITY,
+        LOW_AVAILABILITY,
+        MEDIUM_AVAILABILITY,
+        HIGH_AVAILABILITY
+    }
 
+    private class BuildStationMapTask extends AsyncTask<Void, ProgressState, Map<OverlayAvailability, Map<CityBikesStation, String>>> {
         ProgressBar progressBar;
+        TextView infoBox;
         Button refreshMap;
+        Button visibleOverlay;
         Context context;
+        SortedMap<Integer, List<CityBikesStation>> stationMap;
 
         public BuildStationMapTask (Context ctx){
             super();
-            refreshMap = findViewById(R.id.refreshMapButton);
+            refreshMap = findViewById(R.id.refresh_map_button);
+            visibleOverlay = findViewById(R.id.view_overlay_button);
             infoBox = findViewById(R.id.infoBox);
-            progressBar = findViewById(R.id.indeterminateBar);
+            progressBar = findViewById(R.id.indeterminate_bar);
             this.context = ctx;
         }
 
@@ -94,114 +110,11 @@ public class MainActivity extends AppCompatActivity implements
         protected void onPreExecute (){
             super.onPreExecute();
             progressBar.setVisibility(View.VISIBLE);
-            refreshMap.setVisibility(View.INVISIBLE);
+
+            // Disable everything can make the app explodes if another instance of this task is running
+            refreshMap.setEnabled(false);
+            visibleOverlay.setEnabled(false);
             infoBox.setText(R.string.infobox_starting_text);
-        }
-
-        @Override
-        protected void onPostExecute (final TreeMap<Integer, List<CityBikesStation>> stationMap){
-            super.onPostExecute(stationMap);
-            infoBox.setText(resources.getString(R.string.infobox_adding_stations));
-            if (stationMap == null){
-                // Show the problem to the user but still maitain the app active
-                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
-                        R.string.err_dialog_no_city_found_title,
-                        R.string.err_dialog_no_city_found_message,
-                        R.string.err_dialog_no_city_found_button,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick (DialogInterface dialog, int which) {
-                            }
-                        }).show();
-            }
-            else {
-                // Create maps of (station, description) based on the availability
-                Map<CityBikesStation, String> noAvailabilityMap = null;
-                Map<CityBikesStation, String> lowAvailabilityMap = null;
-                Map<CityBikesStation, String> mediumAvailabilityMap = null;
-                Map<CityBikesStation, String> highAvailabilityMap = null;
-                switch (preferences.getInt(resources.getString(R.string.default_view_station_key), 2)){
-                    case 3:
-                        noAvailabilityMap = new HashMap<>();
-                    case 2:
-                        lowAvailabilityMap = new HashMap<>();
-                    case 1:
-                        mediumAvailabilityMap = new HashMap<>();
-                    case 0:
-                        highAvailabilityMap = new HashMap<>();
-                        break;
-                }
-                String description;
-                for (Integer distance : stationMap.keySet()){
-                    for (CityBikesStation station : stationMap.get(distance)){
-                        Map<CityBikesStation, String> map = null;
-                        String availabilityString = null;
-                        switch ((showAvailablePlaces) ? station.getFreePlacesLevel() :
-                                                        station.getAvailableBikesLevel()){
-                            case NO:
-                                map = noAvailabilityMap;
-                                availabilityString = "NO";
-                                break;
-
-                            case LOW:
-                                map = lowAvailabilityMap;
-                                availabilityString = "Low";
-                                break;
-
-                            case MEDIUM:
-                                map = mediumAvailabilityMap;
-                                availabilityString = "Medium";
-                                break;
-
-                            case HIGH:
-                                map = highAvailabilityMap;
-                                availabilityString = "High";
-                                break;
-                        }
-                        description = resources.getString(R.string.marker_description_available_places,
-                                                          station.getEmptySlots(),
-                                                          distance,
-                                                          availabilityString
-                                );
-                        map.put(station, description);
-                    }
-                }
-                // Add markers to the map view choosing the right marker which depends on the availability
-                if (showAvailablePlaces){
-                    mapManager.replaceStationMarkers(noAvailabilityMap,
-                                            resources.getDrawable(R.drawable.place_no_availability_24dp));
-                    mapManager.replaceStationMarkers(lowAvailabilityMap,
-                                            resources.getDrawable(R.drawable.place_low_availability_24dp));
-                    mapManager.replaceStationMarkers(mediumAvailabilityMap,
-                                            resources.getDrawable(R.drawable.place_medium_availability_24dp));
-                    mapManager.replaceStationMarkers(highAvailabilityMap,
-                                            resources.getDrawable(R.drawable.place_high_availability_24dp));
-                }
-                else {
-                    mapManager.replaceStationMarkers(noAvailabilityMap,
-                                        resources.getDrawable(R.drawable.free_bike_no_availability_24dp));
-                    mapManager.replaceStationMarkers(lowAvailabilityMap,
-                                        resources.getDrawable(R.drawable.free_bike_low_availability_24dp));
-                    mapManager.replaceStationMarkers(mediumAvailabilityMap,
-                                        resources.getDrawable(R.drawable.free_bike_medium_availability_24dp));
-                    mapManager.replaceStationMarkers(highAvailabilityMap,
-                                        resources.getDrawable(R.drawable.free_bike_high_availability_24dp));
-                }
-                // Recreate the RecyclerView list and center the map to the current location
-                mapManager.replaceCurrentLocationMarker(currentLocation,
-                                                        resources.getDrawable(R.drawable.current_location));
-                mapManager.moveTo(currentLocation);
-                stationList.invalidate();
-                stationList.setAdapter(new ShowStationAdapter(context,
-                                                              stationMap,
-                                                              mapManager.getMap(),
-                                                              showAvailablePlaces));
-                infoBox.setText(resources.getString(R.string.infobox_current_location,
-                                                    currentLocation.getLatitude(),
-                                                    currentLocation.getLongitude()));
-                progressBar.setVisibility(View.INVISIBLE);
-                refreshMap.setVisibility(View.VISIBLE);
-            }
         }
 
         @Override
@@ -223,10 +136,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         @Override
-        protected TreeMap<Integer, List<CityBikesStation>> doInBackground (Void... voids){
-            Log.d(TAG, "doInBackground()");
-            progressBar.setVisibility(View.VISIBLE);
-            refreshMap.setVisibility(View.INVISIBLE);
+        protected Map<OverlayAvailability, Map<CityBikesStation, String>> doInBackground (Void... voids){
             if (cityBikesManager == null){
                 cityBikesManager = new CityBikesManager();
             }
@@ -238,10 +148,112 @@ public class MainActivity extends AppCompatActivity implements
                 if (city == null) return null;
                 else cityBikesManager.setCity(city);
             }
+            // Get ordered stations
             publishProgress(ProgressState.COMPUTING_DISTANCES);
-            return (showAvailablePlaces) ?
-                    cityBikesManager.getNearestFreePlacesFrom(currentLocation) :
-                    cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
+            stationMap = (showAvailablePlaces) ? cityBikesManager.getNearestFreePlacesFrom(currentLocation) :
+                                                 cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
+
+            // Create the list for the overlay to be added to the map
+            // TODO Verify a better method without recurring to this creation every time the doInBackground is called
+            publishProgress(ProgressState.MAKE_STATION_LIST);
+            Map<OverlayAvailability, Map<CityBikesStation, String>> availabilityMap = new EnumMap<>(OverlayAvailability.class);
+            Map<CityBikesStation, String> noAvailabilityMap = new HashMap<>();
+            Map<CityBikesStation, String> lowAvailabilityMap = new HashMap<>();
+            Map<CityBikesStation, String> mediumAvailabilityMap = new HashMap<>();
+            Map<CityBikesStation, String> highAvailabilityMap = new HashMap<>();
+
+            String description;
+            for (Integer distance : stationMap.keySet()){
+                for (CityBikesStation station : stationMap.get(distance)){
+                    Map<CityBikesStation, String> map = null;
+                    String availability = null;
+                    switch ((showAvailablePlaces) ? station.getFreePlacesLevel() :
+                                                    station.getAvailableBikesLevel()){
+                        case NO:
+                            map = noAvailabilityMap;
+                            availability = "NO";
+                            break;
+
+                        case LOW:
+                            map = lowAvailabilityMap;
+                            availability = "Low";
+                            break;
+
+                        case MEDIUM:
+                            map = mediumAvailabilityMap;
+                            availability = "Medium";
+                            break;
+
+                        case HIGH:
+                            map = highAvailabilityMap;
+                            availability = "High";
+                            break;
+                    }
+                    description = resources.getString(R.string.marker_description_available_places,
+                                                      station.getEmptySlots(),
+                                                      distance,
+                                                      availability
+                                                      );
+                    map.put(station, description);
+                }
+            }
+            // Add all map to the list to be returned
+            availabilityMap.put(OverlayAvailability.NO_AVAILABILITY, noAvailabilityMap);
+            availabilityMap.put(OverlayAvailability.LOW_AVAILABILITY, lowAvailabilityMap);
+            availabilityMap.put(OverlayAvailability.MEDIUM_AVAILABILITY, mediumAvailabilityMap);
+            availabilityMap.put(OverlayAvailability.HIGH_AVAILABILITY, highAvailabilityMap);
+            return availabilityMap;
+        }
+
+        @Override
+        protected void onPostExecute (Map<OverlayAvailability, Map<CityBikesStation, String>> availabilityMap){
+            // stationList is ordered by availability, from no to high
+            super.onPostExecute(availabilityMap);
+            if (availabilityMap == null){
+                // Show the problem to the user but still maitain the app active
+                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
+                        R.string.err_dialog_no_city_found_title,
+                        R.string.err_dialog_no_city_found_message,
+                        R.string.err_dialog_no_city_found_button,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick (DialogInterface dialog, int which) {
+                            }
+                        }).show();
+            }
+            else {
+                infoBox.setText(R.string.infobox_adding_stations);
+
+                // Add markers to the map view choosing the right marker which depends on the availability
+                // The String element of the stationMap entry is the description of the station the user can
+                // read when he or she tap to a statation on the map
+                for (OverlayAvailability availability : OverlayAvailability.values()){
+                    mapManager.replaceAllStationMarkers(overlayNames.get(availability),
+                                                        availabilityMap.get(availability),
+                                                        overlayDrawables.get(availability));
+
+                }
+
+                // Recreate the RecyclerView list and center the map to the current location
+                mapManager.replaceCurrentLocationMarker(currentLocation,
+                        resources.getDrawable(R.drawable.current_location));
+                mapManager.moveCameraTo(currentLocation);
+                stationListView.invalidate();
+                stationListView.setAdapter(new ShowStationAdapter(context,
+                        stationMap,
+                        mapManager.getMapView(),
+                        showAvailablePlaces)
+                );
+                infoBox.setText(resources.getString(R.string.infobox_current_location,
+                        currentLocation.getLatitude(),
+                        currentLocation.getLongitude())
+                );
+                progressBar.setVisibility(View.INVISIBLE);
+
+                // Re-enable everything disabled in onPreExecute()
+                refreshMap.setEnabled(true);
+                visibleOverlay.setEnabled(true);
+            }
         }
     }
 
@@ -250,24 +262,33 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
 
         if (isExternalStorageAvailable()){
-            // Initialize the map
-            Context ctx = getApplicationContext();
-            Configuration.getInstance().load(ctx,
-                            PreferenceManager.getDefaultSharedPreferences(ctx));
+            preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            Configuration.getInstance().load(getApplicationContext(), preferences);
             setContentView(R.layout.activity_main);
             resources = getResources();
             infoBox = findViewById(R.id.infoBox);
             infoBox.setText(R.string.infobox_init_app);
             locationReceiver = new LocationBroadcastReceiver();
             pendingIntent = createPendingIntent();
-            stationList = findViewById(R.id.stationList);
-            stationList.setHasFixedSize(true);
-            stationList.setLayoutManager(new LinearLayoutManager(this));
+            stationListView = findViewById(R.id.station_list);
+            stationListView.setHasFixedSize(true);
+            stationListView.setLayoutManager(new LinearLayoutManager(this));
             mapManager = new StationMapManager(this, (MapView) findViewById(R.id.map));
-            pendingIntent = createPendingIntent();
             permissionOk = false;
-            preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            showAvailablePlaces = preferences.getBoolean(resources.getString(R.string.map_default_view_list_key), true);
+            visibleOverlayCounter = Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
+                                                          resources.getString(R.string.default_view_station_value)));
+            if (savedInstanceState == null){
+                Log.d(TAG, "Getting showAvailablePlaces from preferences");
+                String defaultView = preferences.getString(resources.getString(R.string.default_view_list_key),
+                                                           resources.getString(R.string.default_pref_view_value));
+                showAvailablePlaces = defaultView.equals(resources.getString(R.string.default_pref_view_value));
+            }
+            else {
+                Log.d(TAG, "Getting showAvailablePlaces from savedInstanceState");
+                showAvailablePlaces = savedInstanceState.getBoolean(resources.getString(R.string.is_available_places));
+            }
+            overlayNames = getOverlayNames();
+            showOptionButtonBackgrounds = buildShowOptionButtonBackgrounds();
         }
         else {
             BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
@@ -283,9 +304,64 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    private Drawable[] buildShowOptionButtonBackgrounds (){
+
+        // This part is application specific, pay attention to the priority order into OverlayAvailability enum
+        Drawable[] backgrounds = new Drawable[OverlayAvailability.values().length << 1];
+        backgrounds[0] = resources.getDrawable(R.drawable.place_view_all);;
+        backgrounds[1] = resources.getDrawable(R.drawable.place_view_up_to_low);;
+        backgrounds[2] = resources.getDrawable(R.drawable.place_view_up_to_medium);;
+        backgrounds[3] = resources.getDrawable(R.drawable.place_view_high);;
+        backgrounds[4] = resources.getDrawable(R.drawable.free_bike_view_all);
+        backgrounds[5] = resources.getDrawable(R.drawable.free_bike_view_up_to_low);
+        backgrounds[6] = resources.getDrawable(R.drawable.free_bike_view_up_to_medium);
+        backgrounds[7] = resources.getDrawable(R.drawable.free_bike_view_high);
+        return backgrounds;
+    }
+
+    private Drawable getShowOptionButtonBackground (int idx){
+        return showOptionButtonBackgrounds[(showAvailablePlaces) ? idx :
+                                                                   idx + OverlayAvailability.values().length];
+    }
+
+    private Map<OverlayAvailability, String> getOverlayNames (){
+        Map<OverlayAvailability, String> overlayNames = new EnumMap<>(OverlayAvailability.class);
+        overlayNames.put(OverlayAvailability.NO_AVAILABILITY, resources.getString(R.string.no_availability_overlay_name));
+        overlayNames.put(OverlayAvailability.LOW_AVAILABILITY, resources.getString(R.string.low_availability_overlay_name));
+        overlayNames.put(OverlayAvailability.MEDIUM_AVAILABILITY, resources.getString(R.string.medium_availability_overlay_name));
+        overlayNames.put(OverlayAvailability.HIGH_AVAILABILITY, resources.getString(R.string.high_availability_overlay_name));
+        return overlayNames;
+    }
+
+    private Map<OverlayAvailability, Drawable> getOverlayDrawables (){
+        Map<OverlayAvailability, Drawable> drawables = new EnumMap<>(OverlayAvailability.class);
+        if (showAvailablePlaces){
+            drawables.put(OverlayAvailability.NO_AVAILABILITY,
+                          resources.getDrawable(R.drawable.place_no_availability_24dp));
+            drawables.put(OverlayAvailability.LOW_AVAILABILITY,
+                          resources.getDrawable(R.drawable.place_low_availability_24dp));
+            drawables.put(OverlayAvailability.MEDIUM_AVAILABILITY,
+                          resources.getDrawable(R.drawable.place_medium_availability_24dp));
+            drawables.put(OverlayAvailability.HIGH_AVAILABILITY,
+                          resources.getDrawable(R.drawable.place_high_availability_24dp));
+        }
+        else {
+            drawables.put(OverlayAvailability.NO_AVAILABILITY,
+                          resources.getDrawable(R.drawable.free_bike_no_availability_24dp));
+            drawables.put(OverlayAvailability.LOW_AVAILABILITY,
+                          resources.getDrawable(R.drawable.free_bike_low_availability_24dp));
+            drawables.put(OverlayAvailability.MEDIUM_AVAILABILITY,
+                          resources.getDrawable(R.drawable.free_bike_medium_availability_24dp));
+            drawables.put(OverlayAvailability.HIGH_AVAILABILITY,
+                          resources.getDrawable(R.drawable.free_bike_high_availability_24dp));
+        }
+        return drawables;
+    }
+
     private PendingIntent createPendingIntent () {
-        Intent intent = new Intent(CHANGE_LOCATION_ACTION);
-        return PendingIntent.getBroadcast(getApplicationContext(), REQUEST_CODE, intent,
+        return PendingIntent.getBroadcast(getApplicationContext(),
+                                          REQUEST_CODE,
+                                          new Intent(CHANGE_LOCATION_ACTION),
                                           PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
@@ -294,7 +370,7 @@ public class MainActivity extends AppCompatActivity implements
                                            @NonNull int[] grantResults) {
         if (requestCode == REQUEST_PERMISSIONS) {
             if (grantResults.length == 2 && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                                         && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 // Camera permission has been granted, preview can be displayed
                 this.permissionOk = true;
             }
@@ -326,6 +402,10 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreateOptionsMenu(menu);
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.main_menu, menu);
+        showOptionItem = menu.findItem(R.id.show_option);
+        showOptionItem.setTitle(showAvailablePlaces ?
+                resources.getString(R.string.show_available_places_entry) :
+                resources.getString(R.string.show_free_bikes_entry));
         return true;
     }
 
@@ -351,8 +431,10 @@ public class MainActivity extends AppCompatActivity implements
             }
             else {
                 registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
-                int minTime = preferences.getInt(resources.getString(R.string.location_interval_list_key),
-                        10000);
+                String minTimePreference =
+                        preferences.getString(resources.getString(R.string.location_interval_list_key),
+                                              resources.getString(R.string.default_pref_location_value));
+                int minTime = Integer.parseInt(minTimePreference);
                 if (minTime == 0){
                     locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
                 }
@@ -397,6 +479,9 @@ public class MainActivity extends AppCompatActivity implements
     public void onResume (){
         super.onResume();
         mapManager.onResume();
+        overlayDrawables = getOverlayDrawables();
+        Button showOptionButton = findViewById(R.id.view_overlay_button);
+        showOptionButton.setBackground(getShowOptionButtonBackground(visibleOverlayCounter));
     }
 
     @Override
@@ -423,15 +508,45 @@ public class MainActivity extends AppCompatActivity implements
                 startActivityForResult(new Intent(MainActivity.this, SettingsActivity.class), 0);
                 return true;
 
+            case R.id.show_option:
+                if (task == null || task.getStatus() != AsyncTask.Status.RUNNING){
+                    // If user taps the menuItem then they want the app to show the other one mode, where
+                    // mode is one of available places or free bikes
+                    showAvailablePlaces = !showAvailablePlaces;
+                }
+                else {
+                    Toast.makeText(this, resources.getString(R.string.toast_running_task),
+                            Toast.LENGTH_SHORT).show();
+                }
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
     public void refreshMap (View v){
-        // TODO implement the refreshing of the map, it could require some changes on design
         locationReceiver.onLocationChanged(this, currentLocation);
     }
+
+    public void centreMapOnCurrentLocation (View v){
+        mapManager.moveCameraTo(currentLocation);
+    }
+
+    public void addVisibleOverlay (View v){
+        List<String> nameList = new LinkedList<>();
+        visibleOverlayCounter %= overlayNames.size();
+        OverlayAvailability[] knownOverlay = OverlayAvailability.values();
+
+        // Set from higher to lower priority by the number of tap the user does
+        for (int i = knownOverlay.length - 1; i >= visibleOverlayCounter; --i){
+            nameList.add(overlayNames.get(knownOverlay[i]));
+        }
+        nameList.add(resources.getString(R.string.current_location_overlay_name));
+        mapManager.setVisibleOverlays(nameList);
+        v.setBackground(getShowOptionButtonBackground(visibleOverlayCounter));
+    }
+
 
     public class LocationBroadcastReceiver extends BroadcastReceiver {
 
@@ -467,17 +582,25 @@ public class MainActivity extends AppCompatActivity implements
 
             // It could happen a location update before the task has finished its job. This could potentially
             // make a new task running and concurrently changing the data structures of the map.
-            if (task == null || task.getStatus() != AsyncTask.Status.RUNNING){
+            if (task == null){
                 task = new BuildStationMapTask(context);
                 task.execute();
+//                showOptionItem.setEnabled(false);
             }
-            if (task.getStatus() == AsyncTask.Status.RUNNING){
+            else if (task.getStatus() == AsyncTask.Status.RUNNING){
                 Toast.makeText(context, resources.getString(R.string.toast_running_task),
                                Toast.LENGTH_SHORT).show();
             }
-            if (task.getStatus() == AsyncTask.Status.PENDING){
+            else if (task.getStatus() == AsyncTask.Status.PENDING){
                 Toast.makeText(context, resources.getString(R.string.toast_pending_task),
                                Toast.LENGTH_SHORT).show();
+            }
+            else if (task.getStatus() == AsyncTask.Status.FINISHED){
+                Log.d(TAG, "onLocationChanged: AsyncTask finished");
+                showOptionItem.setEnabled(true);
+
+                // Make the garbage collector to destroy the task
+                task = null;
             }
         }
 
