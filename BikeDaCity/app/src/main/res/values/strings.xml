@@ -1,9 +1,14 @@
 <resources>
     <string name="app_name">BikeDaCity</string>
 
-    <!-- About Activity related strings -->
+    <!-- Menu key entries-->
     <string name="about_entry">About BikeDaCity</string>
-    <string name="about_dialog_title">About</string>S
+    <string name="setting_entry">Settings</string>
+    <string name="show_available_places_entry">Show free places</string>
+    <string name="show_free_bikes_entry">Show free bikes</string>
+
+    <!-- About Activity related strings -->
+    <string name="about_dialog_title">About</string>
     <string name="devel_title">Developer</string>
     <string name="devel_name">Giuliano Peraz</string>
     <string name="devel_email">giuliano.peraz@gmail.com</string>
@@ -54,7 +59,7 @@
     <string name="no_provider_enabled">No provider has been enabled</string>
     <string name="no_gps_provider_enabled">GPS has to be enabled</string>
 
-    <!-- Information box text -->
+    <!-- Information box texts -->
     <string name="infobox_init_app">Initializing application&#8230;</string>
     <string name="infobox_request_city">Finding city&#8230;</string>
     <string name="infobox_station_ordered">Computing station distances&#8230;</string>
@@ -81,4 +86,13 @@
     <string name="marker_my_location_name">Me</string>
     <string name="marker_my_location_description">I\'m here!</string>
 
+    <!-- Key used for getting saved preferences-->
+    <string name="is_available_places">showAvailablePlaces</string>
+
+    <!-- Overlay names -->
+    <string name="no_availability_overlay_name">No availability</string>
+    <string name="low_availability_overlay_name">Low availability</string>
+    <string name="medium_availability_overlay_name">Medium availability</string>
+    <string name="high_availability_overlay_name">High availability</string>
+    <string name="current_location_overlay_name">Current location</string>
 </resources>
