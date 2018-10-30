@@ -7,4 +7,7 @@
     <item
         android:id="@+id/settings"
         android:title="Preferences" />
+    <item
+        android:id="@+id/show_option"
+        android:title="Show ..." />
 </menu>
