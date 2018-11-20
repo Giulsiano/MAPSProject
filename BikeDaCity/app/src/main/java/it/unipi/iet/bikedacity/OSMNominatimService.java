@@ -14,15 +14,18 @@ import java.net.URL;
 import javax.net.ssl.HttpsURLConnection;
 
 public class OSMNominatimService {
+
     private static final String TAG = "OSMNominatimService";
     private static final String OSMNominatimURL = "https://nominatim.openstreetmap.org/reverse?format=json";
-
+    private static final String[] fieldNames = {"city", "town", "village"};
+    private static final String displayNameField = "display_name";
+    private static JSONObject response;
     /**
      * This method requests the name of a city based on the latitude and logitude passed by parameter
      * @param latitude  Latitude of the city you want
      * @param longitude Longityde of the city you want
-     * @return  The city returned by the Open Street Maps nominatim service, an empty street if the
-     * city isn't in the database of the service or null if an error has occourred
+     * @return  The city returned by the Open Street Maps nominatim service, if it not found it returns the
+     * displayed_name field of the JSON returned from the service
      */
     public static String getCityFrom (double latitude, double longitude){
         String city = null;
@@ -30,9 +33,14 @@ public class OSMNominatimService {
         try {
             URL reverseGeocodingUrl = new URL(OSMNominatimURL + "&lat=" + latitude +
                     "&lon=" + longitude);
-            JSONObject jsonResponse = new JSONObject(downloadContentFrom(reverseGeocodingUrl));
-            JSONObject address = jsonResponse.getJSONObject("address");
-            city = address.has("city")? address.getString("city") : "";
+            response = new JSONObject(downloadContentFrom(reverseGeocodingUrl));
+            JSONObject address = response.getJSONObject("address");
+            for (String fieldName : fieldNames){
+                if (address.has(fieldName)) {
+                    city = address.getString(fieldName);
+                    break;
+                }
+            }
         }
         catch (MalformedURLException e){
             Log.e("TAG", "Nominatim URL is not valid");
@@ -42,6 +50,18 @@ public class OSMNominatimService {
             Log.e(TAG, "Error parsing JSON: " + e.getMessage());
         }
         return city;
+    }
+
+    public static String getDisplayNameFrom (double latitude, double longitude){
+        if (response != null && response.has(displayNameField)) {
+            try{
+                return response.getString(displayNameField);
+            }
+            catch (JSONException e){
+                Log.e(TAG, "Error parsing JSON: " + e.getMessage());
+            }
+        }
+        return null;
     }
 
     private static String downloadContentFrom (URL url){

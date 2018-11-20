@@ -96,6 +96,8 @@ public class MainActivity extends AppCompatActivity implements
         Button visibleOverlay;
         Context context;
         SortedMap<Integer, List<CityBikesStation>> stationMap;
+        String address;
+        Resources resources;
 
         public BuildStationMapTask (Context ctx){
             super();
@@ -104,6 +106,9 @@ public class MainActivity extends AppCompatActivity implements
             infoBox = findViewById(R.id.infoBox);
             progressBar = findViewById(R.id.indeterminate_bar);
             this.context = ctx;
+            this.resources = ctx.getResources();
+            address = this.resources.getString(R.string.address_text,
+                                               this.resources.getString(R.string.default_address_text));
         }
 
         @Override
@@ -145,7 +150,15 @@ public class MainActivity extends AppCompatActivity implements
                 publishProgress(ProgressState.REQUEST_CITY);
                 city = OSMNominatimService.getCityFrom(currentLocation.getLatitude(),
                         currentLocation.getLongitude());
-                if (city == null) return null;
+
+                // There is no city found at the current location coordinates, try to get the name displayed
+                // to OSM Nominatim service
+                if (city == null) {
+                    String displayName = OSMNominatimService.getDisplayNameFrom(currentLocation.getLatitude(),
+                                                                                currentLocation.getLongitude());
+                    if (displayName != null) address = displayName;
+                    return null;
+                }
                 else cityBikesManager.setCity(city);
             }
             // Get ordered stations
@@ -209,7 +222,31 @@ public class MainActivity extends AppCompatActivity implements
         protected void onPostExecute (Map<OverlayAvailability, Map<CityBikesStation, String>> availabilityMap){
             // stationList is ordered by availability, from no to high
             super.onPostExecute(availabilityMap);
-            if (availabilityMap == null){
+            if (availabilityMap != null || availabilityMap.size() != 0){
+                infoBox.setText(R.string.infobox_adding_stations);
+
+                // Add markers to the map view choosing the right marker which depends on the availability
+                // The String element of the stationMap entry is the description of the station the user can
+                // read when he or she tap to a statation on the map
+                for (OverlayAvailability availability : OverlayAvailability.values()){
+                    mapManager.replaceAllStationMarkers(overlayNames.get(availability),
+                            availabilityMap.get(availability),
+                            overlayDrawables.get(availability));
+
+                }
+
+                // Recreate the RecyclerView list and center the map to the current location
+                mapManager.replaceMyPositionMarker(currentLocation,
+                        resources.getDrawable(R.drawable.ic_my_location_24px));
+                mapManager.moveCameraTo(currentLocation);
+                stationListView.invalidate();
+                stationListView.setAdapter(new ShowStationAdapter(context,
+                        stationMap,
+                        mapManager.getMapView(),
+                        showAvailablePlaces));
+                visibleOverlay.setEnabled(true);
+            }
+            else {
                 // Show the problem to the user but still maitain the app active
                 BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
                         R.string.err_dialog_no_city_found_title,
@@ -220,40 +257,13 @@ public class MainActivity extends AppCompatActivity implements
                             public void onClick (DialogInterface dialog, int which) {
                             }
                         }).show();
+                stationListView.setAdapter(new NoStationAdapter(context, address));
             }
-            else {
-                infoBox.setText(R.string.infobox_adding_stations);
-
-                // Add markers to the map view choosing the right marker which depends on the availability
-                // The String element of the stationMap entry is the description of the station the user can
-                // read when he or she tap to a statation on the map
-                for (OverlayAvailability availability : OverlayAvailability.values()){
-                    mapManager.replaceAllStationMarkers(overlayNames.get(availability),
-                                                        availabilityMap.get(availability),
-                                                        overlayDrawables.get(availability));
-
-                }
-
-                // Recreate the RecyclerView list and center the map to the current location
-                mapManager.replaceCurrentLocationMarker(currentLocation,
-                        resources.getDrawable(R.drawable.current_location));
-                mapManager.moveCameraTo(currentLocation);
-                stationListView.invalidate();
-                stationListView.setAdapter(new ShowStationAdapter(context,
-                        stationMap,
-                        mapManager.getMapView(),
-                        showAvailablePlaces)
-                );
-                infoBox.setText(resources.getString(R.string.infobox_current_location,
-                        currentLocation.getLatitude(),
-                        currentLocation.getLongitude())
-                );
-                progressBar.setVisibility(View.INVISIBLE);
-
-                // Re-enable everything disabled in onPreExecute()
-                refreshMap.setEnabled(true);
-                visibleOverlay.setEnabled(true);
-            }
+            infoBox.setText(resources.getString(R.string.infobox_current_location,
+                    currentLocation.getLatitude(),
+                    currentLocation.getLongitude()));
+            refreshMap.setEnabled(true);
+            progressBar.setVisibility(View.INVISIBLE);
         }
     }
 
