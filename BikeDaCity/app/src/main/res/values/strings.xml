@@ -95,4 +95,10 @@
     <string name="medium_availability_overlay_name">Medium availability</string>
     <string name="high_availability_overlay_name">High availability</string>
     <string name="current_location_overlay_name">Current location</string>
+
+    <!-- String used by the app to signal no station has been found -->
+    <string name="address_text">Where I am:\n%1$s.</string>
+    <string name="no_station_found_text">No station have been found.</string>
+    <string name="default_address_text">Unknown location.</string>
+
 </resources>
