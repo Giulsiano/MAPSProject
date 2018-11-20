@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final int REQUEST_CODE = 0;
     private SharedPreferences preferences;
     private Resources resources;
-    private StationMapManager mapManager;
+    private OSMapManager mapManager;
     private CityBikesManager cityBikesManager;
     private Location currentLocation;
     private RecyclerView stationListView;
@@ -273,7 +273,7 @@ public class MainActivity extends AppCompatActivity implements
             stationListView = findViewById(R.id.station_list);
             stationListView.setHasFixedSize(true);
             stationListView.setLayoutManager(new LinearLayoutManager(this));
-            mapManager = new StationMapManager(this, (MapView) findViewById(R.id.map));
+            mapManager = new OSMapManager(this, (MapView) findViewById(R.id.map));
             permissionOk = false;
             visibleOverlayCounter = Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
                                                           resources.getString(R.string.default_view_station_value)));
@@ -308,14 +308,14 @@ public class MainActivity extends AppCompatActivity implements
 
         // This part is application specific, pay attention to the priority order into OverlayAvailability enum
         Drawable[] backgrounds = new Drawable[OverlayAvailability.values().length << 1];
-        backgrounds[0] = resources.getDrawable(R.drawable.place_view_all);;
-        backgrounds[1] = resources.getDrawable(R.drawable.place_view_up_to_low);;
-        backgrounds[2] = resources.getDrawable(R.drawable.place_view_up_to_medium);;
-        backgrounds[3] = resources.getDrawable(R.drawable.place_view_high);;
-        backgrounds[4] = resources.getDrawable(R.drawable.free_bike_view_all);
-        backgrounds[5] = resources.getDrawable(R.drawable.free_bike_view_up_to_low);
-        backgrounds[6] = resources.getDrawable(R.drawable.free_bike_view_up_to_medium);
-        backgrounds[7] = resources.getDrawable(R.drawable.free_bike_view_high);
+        backgrounds[0] = resources.getDrawable(R.drawable.ic_place_view_all_h24);
+        backgrounds[1] = resources.getDrawable(R.drawable.ic_place_view_up_to_low_h24);
+        backgrounds[2] = resources.getDrawable(R.drawable.ic_place_view_up_to_medium_h24);
+        backgrounds[3] = resources.getDrawable(R.drawable.ic_place_view_high_h24);
+        backgrounds[4] = resources.getDrawable(R.drawable.ic_free_bike_view_all_h24);
+        backgrounds[5] = resources.getDrawable(R.drawable.ic_free_bike_view_up_to_low_h24);
+        backgrounds[6] = resources.getDrawable(R.drawable.ic_free_bike_view_up_to_medium_h24);
+        backgrounds[7] = resources.getDrawable(R.drawable.ic_free_bike_view_high_h24);
         return backgrounds;
     }
 
@@ -337,23 +337,23 @@ public class MainActivity extends AppCompatActivity implements
         Map<OverlayAvailability, Drawable> drawables = new EnumMap<>(OverlayAvailability.class);
         if (showAvailablePlaces){
             drawables.put(OverlayAvailability.NO_AVAILABILITY,
-                          resources.getDrawable(R.drawable.place_no_availability_24dp));
+                          resources.getDrawable(R.drawable.ic_place_no_availability));
             drawables.put(OverlayAvailability.LOW_AVAILABILITY,
-                          resources.getDrawable(R.drawable.place_low_availability_24dp));
+                          resources.getDrawable(R.drawable.ic_place_low_availability));
             drawables.put(OverlayAvailability.MEDIUM_AVAILABILITY,
-                          resources.getDrawable(R.drawable.place_medium_availability_24dp));
+                          resources.getDrawable(R.drawable.ic_place_medium_availability));
             drawables.put(OverlayAvailability.HIGH_AVAILABILITY,
-                          resources.getDrawable(R.drawable.place_high_availability_24dp));
+                          resources.getDrawable(R.drawable.ic_place_high_availability));
         }
         else {
             drawables.put(OverlayAvailability.NO_AVAILABILITY,
-                          resources.getDrawable(R.drawable.free_bike_no_availability_24dp));
+                          resources.getDrawable(R.drawable.ic_free_bike_no_availability));
             drawables.put(OverlayAvailability.LOW_AVAILABILITY,
-                          resources.getDrawable(R.drawable.free_bike_low_availability_24dp));
+                          resources.getDrawable(R.drawable.ic_free_bike_low_availability));
             drawables.put(OverlayAvailability.MEDIUM_AVAILABILITY,
-                          resources.getDrawable(R.drawable.free_bike_medium_availability_24dp));
+                          resources.getDrawable(R.drawable.ic_free_bike_medium_availability));
             drawables.put(OverlayAvailability.HIGH_AVAILABILITY,
-                          resources.getDrawable(R.drawable.free_bike_high_availability_24dp));
+                          resources.getDrawable(R.drawable.ic_free_bike_high_availability));
         }
         return drawables;
     }
@@ -446,11 +446,6 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
         }
-    }
-
-    private boolean isCurrentLocationTooOld(){
-        return currentLocation == null ||
-                Math.abs(currentLocation.getTime() - System.currentTimeMillis()) > OLD_THRESHOLD;
     }
 
     private void requestEnablingProvider (){
@@ -598,9 +593,6 @@ public class MainActivity extends AppCompatActivity implements
             else if (task.getStatus() == AsyncTask.Status.FINISHED){
                 Log.d(TAG, "onLocationChanged: AsyncTask finished");
                 showOptionItem.setEnabled(true);
-
-                // Make the garbage collector to destroy the task
-                task = null;
             }
         }
 
