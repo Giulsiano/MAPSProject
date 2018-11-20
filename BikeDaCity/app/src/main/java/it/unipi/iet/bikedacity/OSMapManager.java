@@ -192,7 +192,7 @@ public class OSMapManager{
         }
     }
 
-    public void replaceAllMarkers (String overlayName, Map<CityBikesStation, String> newStations,
+    public void replaceAllMarkersOn (String overlayName, Map<CityBikesStation, String> newStations,
                                    Drawable newMarker){
         removeAllMarkersOn(overlayName);
         addMarkersTo(overlayName, newStations, newMarker);
