@@ -218,7 +218,7 @@ public class CityBikesManager {
             String networkEndpoint = null;
             JSONArray networks = getNetworks();
             if (networks == null){
-                Log.w(TAG, "Error retrieving network information for "+ city);
+                Log.w(TAG, "No networks found for "+ city);
                 return stations;
             }
             JSONObject location, network;
@@ -240,15 +240,17 @@ public class CityBikesManager {
                 Log.w(TAG, "City isn't in the list of Citybikes");
                 return stations;
             }
-            try {
-                JSONObject cityStations = new JSONObject(downloadContentFrom(CITYBIKESAPIURL + networkEndpoint));
-                JSONArray jsonStations = cityStations.getJSONObject("network").getJSONArray("stations");
-                for (int i = 0; i < jsonStations.length(); ++i){
-                    stations.add(new CityBikesStation(jsonStations.getJSONObject(i)));
+            else {
+                try {
+                    JSONObject cityStations = new JSONObject(downloadContentFrom(CITYBIKESAPIURL + networkEndpoint));
+                    JSONArray jsonStations = cityStations.getJSONObject("network").getJSONArray("stations");
+                    for (int i = 0; i < jsonStations.length(); ++i){
+                        stations.add(new CityBikesStation(jsonStations.getJSONObject(i)));
+                    }
                 }
-            }
-            catch (JSONException e) {
-                Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
+                catch (JSONException e) {
+                    Log.e(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
+                }
             }
             return stations;
         }
