@@ -21,8 +21,8 @@ import java.util.Locale;
 import java.util.Map;
 
 // TODO Add clearing of tiles for osmdroid
-public class OSMMapManager{
-    public static final String TAG = "OSMMapManager";
+public class OSMapManager{
+    public static final String TAG = "OSMapManager";
     private static final String MY_POSITION_TITLE = "I'm here!";
     public static final long DEFAULT_ANIMATION_DURATION = 500L;
     public static double DEFAULT_ZOOM = 18.0;
@@ -36,7 +36,7 @@ public class OSMMapManager{
     private Map<String, ItemizedIconOverlay<OverlayItem>> overlayMap;
     private ItemizedIconOverlay.OnItemGestureListener<OverlayItem> defaultGestureListener;
 
-    public OSMMapManager (Context ctx, final MapView map){
+    public OSMapManager (Context ctx, final MapView map){
         this.context = ctx;
         this.map = map;
         this.map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
