@@ -43,8 +43,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-// TODO Menu key for cleaning osmdroid tiles (?)
 // TODO get settings
+// TODO move OverlayAvailability to BikeDaCityUtils
+// TODO first fix logic for moving the camera only the first time the location is updated
 // TODO Save showAvailablePlaces on calling onSaveInstaces
 
 public class MainActivity extends AppCompatActivity implements
@@ -69,11 +70,11 @@ public class MainActivity extends AppCompatActivity implements
     private Drawable[] showOptionButtonBackgrounds;
 
     private boolean permissionOk;
+    private boolean isFirstFix;
     private boolean showAvailablePlaces;
     private int visibleOverlayCounter;
 
     private static final int REQUEST_PERMISSIONS = 0;
-    private static final long OLD_THRESHOLD = 1*60*1000;
 
     private enum ProgressState {
         REQUEST_CITY,
@@ -238,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements
                 // Recreate the RecyclerView list and center the map to the current location
                 mapManager.replaceMyPositionMarker(currentLocation,
                         resources.getDrawable(R.drawable.ic_my_location_24px));
+
                 mapManager.moveCameraTo(currentLocation);
                 stationListView.invalidate();
                 stationListView.setAdapter(new ShowStationAdapter(context,
@@ -285,17 +287,17 @@ public class MainActivity extends AppCompatActivity implements
             stationListView.setLayoutManager(new LinearLayoutManager(this));
             mapManager = new OSMapManager(this, (MapView) findViewById(R.id.map));
             permissionOk = false;
-            visibleOverlayCounter = Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
-                                                          resources.getString(R.string.default_view_station_value)));
+
             if (savedInstanceState == null){
                 Log.d(TAG, "Getting showAvailablePlaces from preferences");
                 String defaultView = preferences.getString(resources.getString(R.string.default_view_list_key),
                                                            resources.getString(R.string.default_pref_view_value));
                 showAvailablePlaces = defaultView.equals(resources.getString(R.string.default_pref_view_value));
+
             }
             else {
                 Log.d(TAG, "Getting showAvailablePlaces from savedInstanceState");
-                showAvailablePlaces = savedInstanceState.getBoolean(resources.getString(R.string.is_available_places));
+                showAvailablePlaces = savedInstanceState.getBoolean(resources.getString(R.string.pref_show_available_places));
             }
             overlayNames = getOverlayNames();
             showOptionButtonBackgrounds = buildShowOptionButtonBackgrounds();
@@ -449,11 +451,12 @@ public class MainActivity extends AppCompatActivity implements
                     locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
                 }
                 else {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                            minTime,
-                            0,
-                            pendingIntent);
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, 0,
+                                                           pendingIntent);
                 }
+                String counter = preferences.getString(resources.getString(R.string.default_view_station_key),
+                                                       resources.getString(R.string.default_view_station_value));
+                visibleOverlayCounter = Integer.parseInt(counter);
             }
         }
     }
@@ -485,6 +488,13 @@ public class MainActivity extends AppCompatActivity implements
         super.onResume();
         mapManager.onResume();
         overlayDrawables = getOverlayDrawables();
+
+        // Get values saved into onPause(), if they don't exist take values from preferences
+        String counter = preferences.getString(
+                                resources.getString(R.string.pref_visible_overlays),
+                                preferences.getString(resources.getString(R.string.default_view_station_key),
+                                                      resources.getString(R.string.default_view_station_value)));
+        visibleOverlayCounter = Integer.parseInt(counter);
         Button showOptionButton = findViewById(R.id.view_overlay_button);
         showOptionButton.setBackground(getShowOptionButtonBackground(visibleOverlayCounter));
     }
@@ -494,6 +504,10 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onPause() Called");
         super.onPause();
         mapManager.onPause();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(resources.getString(R.string.pref_show_available_places), showAvailablePlaces);
+        editor.putInt(resources.getString(R.string.pref_visible_overlays), visibleOverlayCounter);
+        editor.apply();
     }
 
     @Override
@@ -501,6 +515,8 @@ public class MainActivity extends AppCompatActivity implements
         super.onStop();
         unregisterReceiver(locationReceiver);
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected (MenuItem item) {
@@ -590,7 +606,6 @@ public class MainActivity extends AppCompatActivity implements
             if (task == null){
                 task = new BuildStationMapTask(context);
                 task.execute();
-//                showOptionItem.setEnabled(false);
             }
             else if (task.getStatus() == AsyncTask.Status.RUNNING){
                 Toast.makeText(context, resources.getString(R.string.toast_running_task),
@@ -602,7 +617,6 @@ public class MainActivity extends AppCompatActivity implements
             }
             else if (task.getStatus() == AsyncTask.Status.FINISHED){
                 Log.d(TAG, "onLocationChanged: AsyncTask finished");
-                showOptionItem.setEnabled(true);
             }
         }
 

@@ -86,9 +86,6 @@
     <string name="marker_my_location_name">Me</string>
     <string name="marker_my_location_description">I\'m here!</string>
 
-    <!-- Key used for getting saved preferences-->
-    <string name="is_available_places">showAvailablePlaces</string>
-
     <!-- Overlay names -->
     <string name="no_availability_overlay_name">No availability</string>
     <string name="low_availability_overlay_name">Low availability</string>
