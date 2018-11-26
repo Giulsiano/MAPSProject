@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements
     private BuildStationMapTask task;
     private Map<OverlayAvailability, String> overlayNames;
     private Map<OverlayAvailability, Drawable> overlayDrawables;
-    private Drawable[] showOptionButtonBackgrounds;
+    private int[] showVisibleOverlaysButtonBackgroundIds;
 
     private boolean permissionOk;
     private boolean isFirstFix;
@@ -297,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements
                 showAvailablePlaces = savedInstanceState.getBoolean(resources.getString(R.string.pref_show_available_places));
             }
             overlayNames = getOverlayNames();
-            showOptionButtonBackgrounds = buildShowOptionButtonBackgrounds();
+            showVisibleOverlaysButtonBackgroundIds = buildShowOptionButtonBackgrounds();
         }
         else {
             BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
@@ -313,23 +313,23 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private Drawable[] buildShowOptionButtonBackgrounds (){
+    private int[] buildShowOptionButtonBackgrounds (){
 
         // This part is application specific, pay attention to the priority order into OverlayAvailability enum
-        Drawable[] backgrounds = new Drawable[OverlayAvailability.values().length << 1];
-        backgrounds[0] = resources.getDrawable(R.drawable.ic_place_view_all_h24);
-        backgrounds[1] = resources.getDrawable(R.drawable.ic_place_view_up_to_low_h24);
-        backgrounds[2] = resources.getDrawable(R.drawable.ic_place_view_up_to_medium_h24);
-        backgrounds[3] = resources.getDrawable(R.drawable.ic_place_view_high_h24);
-        backgrounds[4] = resources.getDrawable(R.drawable.ic_free_bike_view_all_h24);
-        backgrounds[5] = resources.getDrawable(R.drawable.ic_free_bike_view_up_to_low_h24);
-        backgrounds[6] = resources.getDrawable(R.drawable.ic_free_bike_view_up_to_medium_h24);
-        backgrounds[7] = resources.getDrawable(R.drawable.ic_free_bike_view_high_h24);
+        int[] backgrounds = new int[OverlayAvailability.values().length << 1];
+        backgrounds[0] = R.drawable.ic_place_view_all_h24;
+        backgrounds[1] = R.drawable.ic_place_view_up_to_low_h24;
+        backgrounds[2] = R.drawable.ic_place_view_up_to_medium_h24;
+        backgrounds[3] = R.drawable.ic_place_view_high_h24;
+        backgrounds[4] = R.drawable.ic_free_bike_view_all_h24;
+        backgrounds[5] = R.drawable.ic_free_bike_view_up_to_low_h24;
+        backgrounds[6] = R.drawable.ic_free_bike_view_up_to_medium_h24;
+        backgrounds[7] = R.drawable.ic_free_bike_view_high_h24;
         return backgrounds;
     }
 
-    private Drawable getShowOptionButtonBackground (int idx){
-        return showOptionButtonBackgrounds[(showAvailablePlaces) ? idx :
+    private int getShowOptionButtonBackground (int idx){
+        return showVisibleOverlaysButtonBackgroundIds[(showAvailablePlaces) ? idx :
                                                                    idx + OverlayAvailability.values().length];
     }
 
@@ -492,7 +492,7 @@ public class MainActivity extends AppCompatActivity implements
                                 Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
                                                       resources.getString(R.string.default_view_station_value))));
         Button showOptionButton = findViewById(R.id.view_overlay_button);
-        showOptionButton.setBackground(getShowOptionButtonBackground(visibleOverlayCounter));
+        showOptionButton.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
     }
 
     @Override
