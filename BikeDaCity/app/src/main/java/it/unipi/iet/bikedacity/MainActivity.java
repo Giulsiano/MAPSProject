@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements
         ProgressBar progressBar;
         TextView infoBox;
         Button refreshMap;
-        Button visibleOverlay;
+        Button visibleOverlayButton;
         Context context;
         SortedMap<Integer, List<CityBikesStation>> stationMap;
         String address;
@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements
         public BuildStationMapTask (Context ctx){
             super();
             refreshMap = findViewById(R.id.refresh_map_button);
-            visibleOverlay = findViewById(R.id.view_overlay_button);
+            visibleOverlayButton = findViewById(R.id.view_overlay_button);
             infoBox = findViewById(R.id.infoBox);
             progressBar = findViewById(R.id.indeterminate_bar);
             this.context = ctx;
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements
 
             // Disable everything can make the app explodes if another instance of this task is running
             refreshMap.setEnabled(false);
-            visibleOverlay.setEnabled(false);
+            visibleOverlayButton.setEnabled(false);
             infoBox.setText(R.string.infobox_starting_text);
         }
 
@@ -235,8 +235,6 @@ public class MainActivity extends AppCompatActivity implements
                             overlayDrawables.get(availability));
 
                 }
-
-                // Recreate the RecyclerView list and center the map to the current location
                 mapManager.replaceMyPositionMarker(currentLocation,
                         resources.getDrawable(R.drawable.ic_my_location_24px));
 
@@ -246,7 +244,8 @@ public class MainActivity extends AppCompatActivity implements
                         stationMap,
                         mapManager.getMapView(),
                         showAvailablePlaces));
-                visibleOverlay.setEnabled(true);
+                stationListView.invalidate();
+                visibleOverlayButton.setEnabled(true);
             }
             else {
                 // Show the problem to the user but still maitain the app active
@@ -415,9 +414,8 @@ public class MainActivity extends AppCompatActivity implements
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.main_menu, menu);
         showOptionItem = menu.findItem(R.id.show_option);
-        showOptionItem.setTitle(showAvailablePlaces ?
-                resources.getString(R.string.show_available_places_entry) :
-                resources.getString(R.string.show_free_bikes_entry));
+        showOptionItem.setTitle(showAvailablePlaces ? resources.getString(R.string.show_available_places_entry) :
+                                                      resources.getString(R.string.show_free_bikes_entry));
         return true;
     }
 
@@ -457,6 +455,7 @@ public class MainActivity extends AppCompatActivity implements
                 String counter = preferences.getString(resources.getString(R.string.default_view_station_key),
                                                        resources.getString(R.string.default_view_station_value));
                 visibleOverlayCounter = Integer.parseInt(counter);
+                isFirstFix = true;
             }
         }
     }
@@ -490,11 +489,10 @@ public class MainActivity extends AppCompatActivity implements
         overlayDrawables = getOverlayDrawables();
 
         // Get values saved into onPause(), if they don't exist take values from preferences
-        String counter = preferences.getString(
+        visibleOverlayCounter = preferences.getInt(
                                 resources.getString(R.string.pref_visible_overlays),
-                                preferences.getString(resources.getString(R.string.default_view_station_key),
-                                                      resources.getString(R.string.default_view_station_value)));
-        visibleOverlayCounter = Integer.parseInt(counter);
+                                Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
+                                                      resources.getString(R.string.default_view_station_value))));
         Button showOptionButton = findViewById(R.id.view_overlay_button);
         showOptionButton.setBackground(getShowOptionButtonBackground(visibleOverlayCounter));
     }
@@ -515,8 +513,6 @@ public class MainActivity extends AppCompatActivity implements
         super.onStop();
         unregisterReceiver(locationReceiver);
     }
-
-
 
     @Override
     public boolean onOptionsItemSelected (MenuItem item) {
@@ -559,13 +555,13 @@ public class MainActivity extends AppCompatActivity implements
         visibleOverlayCounter %= overlayNames.size();
         OverlayAvailability[] knownOverlay = OverlayAvailability.values();
 
-        // Set from higher to lower priority by the number of tap the user does
+        // Set from higher to lower priority depending on the number of tap the user does
         for (int i = knownOverlay.length - 1; i >= visibleOverlayCounter; --i){
             nameList.add(overlayNames.get(knownOverlay[i]));
         }
         nameList.add(resources.getString(R.string.current_location_overlay_name));
         mapManager.setVisibleOverlays(nameList);
-        v.setBackground(getShowOptionButtonBackground(visibleOverlayCounter));
+        v.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
     }
 
 
@@ -599,24 +595,33 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         public void onLocationChanged (Context context, Location location){
-            currentLocation = location;
 
-            // It could happen a location update before the task has finished its job. This could potentially
-            // make a new task running and concurrently changing the data structures of the map.
-            if (task == null){
+            if (currentLocation == null || !currentLocation.equals(location)){
+                currentLocation = location;
+
+                if (isFirstFix){
+                    mapManager.moveCameraTo(currentLocation);
+                    isFirstFix = false;
+                }
+
                 task = new BuildStationMapTask(context);
                 task.execute();
-            }
-            else if (task.getStatus() == AsyncTask.Status.RUNNING){
-                Toast.makeText(context, resources.getString(R.string.toast_running_task),
-                               Toast.LENGTH_SHORT).show();
-            }
-            else if (task.getStatus() == AsyncTask.Status.PENDING){
-                Toast.makeText(context, resources.getString(R.string.toast_pending_task),
-                               Toast.LENGTH_SHORT).show();
-            }
-            else if (task.getStatus() == AsyncTask.Status.FINISHED){
-                Log.d(TAG, "onLocationChanged: AsyncTask finished");
+
+// This have to rethinked a bit, maybe it is useful to show the toast when the refresh map has tapped
+//                // It could happen a location update before the task has finished its job. This could potentially
+//                // make a new task running and concurrently changing the data structures of the map.
+//                if (task == null || task.getStatus() != AsyncTask.Status.RUNNING){
+//                    task = new BuildStationMapTask(context);
+//                    task.execute();
+//                }
+//                else if (task.getStatus() == AsyncTask.Status.RUNNING){
+//                    Toast.makeText(context, resources.getString(R.string.toast_running_task),
+//                            Toast.LENGTH_SHORT).show();
+//                }
+//                else if (task.getStatus() == AsyncTask.Status.PENDING){
+//                    Toast.makeText(context, resources.getString(R.string.toast_pending_task),
+//                            Toast.LENGTH_SHORT).show();
+//                }
             }
         }
 
