@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-// TODO Add clearing of tiles for osmdroid
 public class OSMapManager{
     public static final String TAG = "OSMapManager";
     private static final String MY_POSITION_TITLE = "I'm here!";
@@ -31,7 +30,6 @@ public class OSMapManager{
     private MapView map;
     private Context context;
     private OverlayItem myPosition;
-    private Drawable myPositionMarker;
 
     private Map<String, ItemizedIconOverlay<OverlayItem>> overlayMap;
     private ItemizedIconOverlay.OnItemGestureListener<OverlayItem> defaultGestureListener;
@@ -134,10 +132,11 @@ public class OSMapManager{
                 "Lat: %f\nLon: %f",
                 location.getLatitude(),
                 location.getLongitude());
-        OverlayItem myPosition = new OverlayItem(MY_POSITION_TITLE, description,
+        myPosition = new OverlayItem(MY_POSITION_TITLE, description,
                 new GeoPoint(location.getLatitude(),
                         location.getLongitude()));
         myPosition.setMarker(marker);
+
         List<OverlayItem> items = new LinkedList<>();
         items.add(myPosition);
         return items;
@@ -163,6 +162,20 @@ public class OSMapManager{
         overlayMap.put(overlayName, new ItemizedIconOverlay<>(itemList, defaultGestureListener, context));
     }
 
+    public void replaceMyPositionMarkerOn (String overlayName, Location myPosition, Drawable drawable){
+        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
+        if (overlay != null) {
+            removeMyPositionMarkerOn(overlayName);
+            addMyPositionMarkerOn(overlayName, myPosition, drawable);
+        }
+    }
+
+    public void removeMyPositionMarkerOn (String overlayName){
+        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
+        if (overlay != null && overlay.size() != 0){
+            overlay.removeItem(myPosition);
+        }
+    }
 
     public void addMarkersTo (String overlayName, Map<CityBikesStation, String> stations, Drawable marker){
         // if there are no stations it isn't needed to add them to the overlay
@@ -174,6 +187,11 @@ public class OSMapManager{
         else {
             overlay.addItems(buildOverlayItemList(stations, marker));
         }
+    }
+
+    public void replaceMyPositionMarker (Location location, Drawable marker){
+        removeMyPositionMarkerOn(MY_POSITION_OVERLAY_NAME);
+        addMyPositionMarkerOn(MY_POSITION_OVERLAY_NAME, location, marker);
     }
 
     public void removeMarkersOn (String overlayName, Iterable<CityBikesStation> stations){
@@ -217,10 +235,6 @@ public class OSMapManager{
             }
         }
     }
-
-    public void replaceMyPositionMarker (Drawable marker){
-        myPosition.setMarker(marker);
-    }
     
     public void moveCameraTo (Location location){
         IMapController controller = map.getController();
@@ -232,13 +246,14 @@ public class OSMapManager{
     public void setVisibleOverlays (List<String> names){
         // remove all overlay from the map, then re-add those who the user wants them to show
         List<Overlay> overlayList = map.getOverlays();
-        for (Overlay overlay : overlayList) overlayList.remove(overlay);
-        for (String overlayName : names){
-            // Get the overlay, if it exist re-add to the visible overlay
-            ItemizedIconOverlay overlay = overlayMap.get(overlayName);
-            if (overlay != null){
-                setOverlayVisibility(overlayName, true);
-            }
-        }
+        for (Overlay overlay : overlayList)
+            overlayList.remove(overlay);
+
+        for (String overlayName : names)
+            setOverlayVisibility(overlayName, true);
+    }
+
+    public void setMyPositionOverlayVisibility (boolean isVisible){
+        setOverlayVisibility(MY_POSITION_OVERLAY_NAME, isVisible);
     }
 }

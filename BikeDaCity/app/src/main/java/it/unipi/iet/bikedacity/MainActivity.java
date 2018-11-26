@@ -230,16 +230,14 @@ public class MainActivity extends AppCompatActivity implements
                 // The String element of the stationMap entry is the description of the station the user can
                 // read when he or she tap to a statation on the map
                 for (OverlayAvailability availability : OverlayAvailability.values()){
-                    mapManager.replaceAllStationMarkers(overlayNames.get(availability),
+                    mapManager.replaceAllMarkersOn(overlayNames.get(availability),
                             availabilityMap.get(availability),
                             overlayDrawables.get(availability));
-
+                    mapManager.setOverlayVisibility(overlayNames.get(availability), true);
                 }
                 mapManager.replaceMyPositionMarker(currentLocation,
                         resources.getDrawable(R.drawable.ic_my_location_24px));
-
-                mapManager.moveCameraTo(currentLocation);
-                stationListView.invalidate();
+                mapManager.setMyPositionOverlayVisibility(true);
                 stationListView.setAdapter(new ShowStationAdapter(context,
                         stationMap,
                         mapManager.getMapView(),
