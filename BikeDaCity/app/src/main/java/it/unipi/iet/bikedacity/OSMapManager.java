@@ -25,8 +25,9 @@ public class OSMapManager{
     private static final String MY_POSITION_TITLE = "I'm here!";
     public static final long DEFAULT_ANIMATION_DURATION = 500L;
     public static double DEFAULT_ZOOM = 18.0;
-    private static String MY_POSITION_OVERLAY_NAME = "myPosition";
+    public static final String MY_POSITION_OVERLAY_NAME = "myPosition";
 
+    private String myPositionTitle;
     private MapView map;
     private Context context;
     private OverlayItem myPosition;
@@ -35,6 +36,10 @@ public class OSMapManager{
     private ItemizedIconOverlay.OnItemGestureListener<OverlayItem> defaultGestureListener;
 
     public OSMapManager (Context ctx, final MapView map){
+        this(ctx, map, null);
+    }
+
+    public OSMapManager (Context ctx, final MapView map, String myPositionTitle){
         this.context = ctx;
         this.map = map;
         this.map.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
@@ -56,6 +61,7 @@ public class OSMapManager{
                 return true;
             }
         };
+        this.myPositionTitle = (myPositionTitle == null) ? MY_POSITION_TITLE : myPositionTitle;
     }
 
     public void setDefaultZoom (double zoom){
@@ -114,9 +120,7 @@ public class OSMapManager{
             overlayMap.put(MY_POSITION_OVERLAY_NAME, defaultOverlay);
         }
         else {
-            if (defaultOverlay.size() == 0){
-                defaultOverlay.addItems(buildMyPositionMarker(location, marker));
-            }
+            defaultOverlay.addItems(buildMyPositionMarker(location, marker));
         }
     }
 
@@ -125,6 +129,9 @@ public class OSMapManager{
         if (overlay != null){
             overlay.addItems(buildMyPositionMarker(location, marker));
         }
+        else {
+            addMyPositionMarker(location, marker);
+        }
     }
 
     private List<OverlayItem> buildMyPositionMarker (Location location, Drawable marker){
@@ -132,7 +139,7 @@ public class OSMapManager{
                 "Lat: %f\nLon: %f",
                 location.getLatitude(),
                 location.getLongitude());
-        myPosition = new OverlayItem(MY_POSITION_TITLE, description,
+        myPosition = new OverlayItem(myPositionTitle, description,
                 new GeoPoint(location.getLatitude(),
                         location.getLongitude()));
         myPosition.setMarker(marker);
@@ -180,7 +187,7 @@ public class OSMapManager{
     public void addMarkersTo (String overlayName, Map<CityBikesStation, String> stations, Drawable marker){
         // if there are no stations it isn't needed to add them to the overlay
         if (stations == null) return;
-        ItemizedIconOverlay overlay = overlayMap.get(overlayName);
+        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
         if (overlay == null) {
             addOverlay(overlayName, stations, marker);
         }
@@ -195,7 +202,7 @@ public class OSMapManager{
     }
 
     public void removeMarkersOn (String overlayName, Iterable<CityBikesStation> stations){
-        ItemizedIconOverlay overlay = overlayMap.get(overlayName);
+        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
         if (overlay == null || overlay.size() == 0)
             return;
 
@@ -224,7 +231,7 @@ public class OSMapManager{
     }
 
     public void removeMarkerOn (String overlayName, CityBikesStation station){
-        ItemizedIconOverlay overlay = overlayMap.get(overlayName);
+        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
         if (overlay == null || overlay.size() == 0){
             return;
         }
