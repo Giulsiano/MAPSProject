@@ -236,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements
                     mapManager.setOverlayVisibility(overlayNames.get(availability), true);
                 }
                 mapManager.replaceMyPositionMarker(currentLocation,
-                        resources.getDrawable(R.drawable.ic_my_location_24px));
+                        resources.getDrawable(R.drawable.ic_place_24px));
                 mapManager.setMyPositionOverlayVisibility(true);
                 stationListView.setAdapter(new ShowStationAdapter(context,
                         stationMap,
