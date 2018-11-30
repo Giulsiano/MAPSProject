@@ -68,6 +68,10 @@ public class OSMapManager{
         DEFAULT_ZOOM = zoom;
     }
 
+    public double getDefaultZoom (){
+        return DEFAULT_ZOOM;
+    }
+
     public MapView getMapView () {
         return map;
     }

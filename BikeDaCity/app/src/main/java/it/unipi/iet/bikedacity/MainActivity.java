@@ -463,6 +463,10 @@ public class MainActivity extends AppCompatActivity implements
                                 resources.getString(R.string.pref_visible_overlays),
                                 Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
                                                       resources.getString(R.string.default_view_station_value))));
+        mapManager.setDefaultZoom(
+                (double) preferences.getFloat(resources.getString(R.string.pref_zoom),
+                                              Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
+                                                               resources.getString(R.string.default_zoom_value)))));
         Button showOptionButton = findViewById(R.id.view_overlay_button);
         showOptionButton.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -514,6 +518,7 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean(resources.getString(R.string.pref_show_available_places), showAvailablePlaces);
         editor.putInt(resources.getString(R.string.pref_visible_overlays), visibleOverlayCounter);
+        editor.putFloat(resources.getString(R.string.pref_zoom), (float) mapManager.getDefaultZoom());
         editor.apply();
     }
 
