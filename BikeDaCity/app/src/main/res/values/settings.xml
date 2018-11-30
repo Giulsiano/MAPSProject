@@ -99,5 +99,6 @@
     <!-- Key used for getting the app's state restored when paused or something else -->
     <string name="pref_show_available_places">showAvailablePlaces</string>
     <string name="pref_visible_overlays">visibleOverlays</string>
+    <string name="pref_zoom">userSetZoom</string>
 
 </resources>
