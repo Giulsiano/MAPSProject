@@ -43,10 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-// TODO get settings
 // TODO move OverlayAvailability to BikeDaCityUtils
-// TODO first fix logic for moving the camera only the first time the location is updated
-// TODO Save showAvailablePlaces on calling onSaveInstaces
 
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
@@ -121,6 +118,9 @@ public class MainActivity extends AppCompatActivity implements
             refreshMap.setEnabled(false);
             visibleOverlayButton.setEnabled(false);
             infoBox.setText(R.string.infobox_starting_text);
+            mapManager.replaceMyPositionMarker(currentLocation,
+                    resources.getDrawable(R.drawable.ic_place_24px));
+            mapManager.setMyPositionOverlayVisibility(true);
         }
 
         @Override
@@ -235,9 +235,6 @@ public class MainActivity extends AppCompatActivity implements
                             overlayDrawables.get(availability));
                     mapManager.setOverlayVisibility(overlayNames.get(availability), true);
                 }
-                mapManager.replaceMyPositionMarker(currentLocation,
-                        resources.getDrawable(R.drawable.ic_place_24px));
-                mapManager.setMyPositionOverlayVisibility(true);
                 stationListView.setAdapter(new ShowStationAdapter(context,
                         stationMap,
                         mapManager.getMapView(),
@@ -431,31 +428,6 @@ public class MainActivity extends AppCompatActivity implements
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                             Manifest.permission.WRITE_EXTERNAL_STORAGE}).show();
         }
-        else {
-            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            Log.i(TAG, "App has the right permissions granted");
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-                requestEnablingProvider();
-            }
-            else {
-                registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
-                String minTimePreference =
-                        preferences.getString(resources.getString(R.string.location_interval_list_key),
-                                              resources.getString(R.string.default_pref_location_value));
-                int minTime = Integer.parseInt(minTimePreference);
-                if (minTime == 0){
-                    locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
-                }
-                else {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, 0,
-                                                           pendingIntent);
-                }
-                String counter = preferences.getString(resources.getString(R.string.default_view_station_key),
-                                                       resources.getString(R.string.default_view_station_value));
-                visibleOverlayCounter = Integer.parseInt(counter);
-                isFirstFix = true;
-            }
-        }
     }
 
     private void requestEnablingProvider (){
@@ -493,6 +465,45 @@ public class MainActivity extends AppCompatActivity implements
                                                       resources.getString(R.string.default_view_station_value))));
         Button showOptionButton = findViewById(R.id.view_overlay_button);
         showOptionButton.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        Log.i(TAG, "App has the right permissions granted");
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+            requestEnablingProvider();
+        }
+        else {
+            registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
+            String minTimePreference =
+                    preferences.getString(resources.getString(R.string.location_interval_list_key),
+                            resources.getString(R.string.default_pref_location_value));
+            int minTime = Integer.parseInt(minTimePreference);
+            try {
+                if (minTime == 0){
+                    locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
+                }
+                else {
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, 0,
+                            pendingIntent);
+                }
+                String counter = preferences.getString(resources.getString(R.string.default_view_station_key),
+                        resources.getString(R.string.default_view_station_value));
+                visibleOverlayCounter = Integer.parseInt(counter);
+                isFirstFix = true;
+            }
+            catch (SecurityException e){
+                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
+                        R.string.err_dialog_perm_not_granted_title,
+                        R.string.err_dialog_perm_not_granted_message,
+                        R.string.err_dialog_perm_not_granted_button,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick (DialogInterface dialog, int which) {
+                                finish();
+                            }
+                        }
+                ).show();
+            }
+        }
+
     }
 
     @Override
@@ -509,7 +520,12 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onStop(){
         super.onStop();
-        unregisterReceiver(locationReceiver);
+        try{
+            unregisterReceiver(locationReceiver);
+        }
+        catch (IllegalArgumentException e){
+            // Location Receiver has not been registered yet
+        }
     }
 
     @Override
