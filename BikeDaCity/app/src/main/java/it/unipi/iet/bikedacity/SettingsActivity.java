@@ -22,7 +22,6 @@ import android.preference.PreferenceManager;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-// TODO add setting for map clearing tile
 public class SettingsActivity extends Activity {
     private static String TAG = "SettingsActivity";
     /**
@@ -32,30 +31,18 @@ public class SettingsActivity extends Activity {
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange (Preference preference, Object value) {
-            String stringValue = value.toString();
-            Resources res = preference.getContext().getResources();
+            String summary = value.toString();
 
             if (preference instanceof ListPreference) {
                 // For list preferences, look up the correct display value in
                 // the preference's 'entries' list.
                 ListPreference listPreference = (ListPreference) preference;
-                int index = listPreference.findIndexOfValue(stringValue);
+                int index = listPreference.findIndexOfValue(summary);
 
                 // Set the summary to reflect the new value.
-                String summary;
-                if (res.getString(R.string.default_view_station_key).equals(preference.getKey())){
-                    summary = res.getString(R.string.pref_view_station_default_summary, stringValue);
-                }
-                else {
-                    summary = listPreference.getEntries()[index].toString();
-                }
-                preference.setSummary(index >= 0 ? summary : null);
+                summary = (index != -1) ? listPreference.getEntries()[index].toString() : null;
             }
-            else {
-                // For all other preferences, set the summary to the value's
-                // simple string representation.
-                preference.setSummary(stringValue);
-            }
+            preference.setSummary(summary);
             return true;
         }
     };
@@ -102,6 +89,7 @@ public class SettingsActivity extends Activity {
             bindPreferenceSummaryToValue(findPreference(res.getString(R.string.default_view_list_key)));
             bindPreferenceSummaryToValue(findPreference(res.getString(R.string.location_interval_list_key)));
             bindPreferenceSummaryToValue(findPreference(res.getString(R.string.default_view_station_key)));
+            bindPreferenceSummaryToValue(findPreference(res.getString(R.string.zoom_list_key)));
         }
     }
 }

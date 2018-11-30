@@ -50,21 +50,51 @@
         <item>0</item>
     </string-array>
 
+    <string name="default_zoom_value">16.0</string>
+    <string-array name="pref_zoom_entries">
+        <item>9 – 1:1.000.000</item>
+        <item>10 – 1:500.000</item>
+        <item>11 – 1:250.000</item>
+        <item>12 – 1:150.000</item>
+        <item>13 – 1:70.000</item>
+        <item>14 – 1:35.000</item>
+        <item>15 – 1:15.000</item>
+        <item>16 – 1:8.000</item>
+        <item>17 – 1:4.000</item>
+        <item>18 – 1:2.000</item>
+    </string-array>
+    <string-array name="pref_zoom_values">
+        <item>9.0</item>
+        <item>10.0</item>
+        <item>11.0</item>
+        <item>12.0</item>
+        <item>13.0</item>
+        <item>14.0</item>
+        <item>15.0</item>
+        <item>16.0</item>
+        <item>17.0</item>
+        <item>18.0</item>
+    </string-array>
+
+
     <!-- Key used for shared preferences -->
     <string name="default_view_station_key">default_station_view</string>
     <string name="location_interval_list_key">location_interval_list</string>
-    <string name="default_view_list_key">default_view</string>
+    <string name="default_view_list_key">view_list</string>
+    <string name="zoom_list_key">zoom_list</string>
 
     <!-- Titles -->
     <string name="pref_location_category_name">Location Settings</string>
     <string name="pref_map_category_name">Map Settings</string>
     <string name="pref_default_view_title">Default map view</string>
     <string name="pref_view_station_title">Show stations on map</string>
+    <string name="pref_zoom_title">Zoom – Scale</string>
 
     <!-- Summaries -->
     <string name="default_view_summary">Select the view you use more frequently</string>
     <string name="pref_location_interval_summary">After how many seconds the app updates the location</string>
     <string name="pref_view_station_default_summary">%1$s</string>
+    <string name="pref_zoom_summary">1:500.000 means 1 cm is equal to 50.000 cm (500 m) in reality</string>
 
     <!-- Key used for getting the app's state restored when paused or something else -->
     <string name="pref_show_available_places">showAvailablePlaces</string>
