@@ -496,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean(resources.getString(R.string.pref_show_available_places), showAvailablePlaces);
         editor.putInt(resources.getString(R.string.pref_visible_overlays), visibleOverlayCounter);
-        editor.putFloat(resources.getString(R.string.pref_zoom), (float) mapManager.getDefaultZoom());
+        editor.putFloat(resources.getString(R.string.pref_zoom), (float) mapManager.getCurrentZoomLevel());
         editor.apply();
     }
 

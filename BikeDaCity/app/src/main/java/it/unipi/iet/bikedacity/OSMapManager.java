@@ -64,8 +64,23 @@ public class OSMapManager{
         this.myPositionTitle = (myPositionTitle == null) ? MY_POSITION_TITLE : myPositionTitle;
     }
 
+    public void setMaxZoom (double maxZoom){
+        map.setMaxZoomLevel(maxZoom);
+    }
+
+    public void setMinZoom (double minZoom){
+        map.setMinZoomLevel(minZoom);
+    }
+
     public void setDefaultZoom (double zoom){
-        DEFAULT_ZOOM = zoom;
+        if (zoom != DEFAULT_ZOOM){
+            DEFAULT_ZOOM = zoom;
+            map.getController().setZoom(zoom);
+        }
+    }
+
+    public double getCurrentZoomLevel (){
+        return map.getZoomLevelDouble();
     }
 
     public double getDefaultZoom (){
