@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private boolean permissionOk;
     private boolean isFirstFix;
+    private boolean noStationAlertShown;
     private boolean showAvailablePlaces;
     private int visibleOverlayCounter;
 
@@ -235,16 +236,19 @@ public class MainActivity extends AppCompatActivity implements
                 visibleOverlayButton.setEnabled(true);
             }
             else {
-                // Show the problem to the user but still maitain the app active
-                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
-                        R.string.err_dialog_no_city_found_title,
-                        R.string.err_dialog_no_city_found_message,
-                        R.string.err_dialog_no_city_found_button,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick (DialogInterface dialog, int which) {
-                            }
-                        }).show();
+                if (!noStationAlertShown){
+                    // Show the problem to the user but still maitain the app active
+                    BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
+                            R.string.err_dialog_no_city_found_title,
+                            R.string.err_dialog_no_city_found_message,
+                            R.string.err_dialog_no_city_found_button,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick (DialogInterface dialog, int which) {
+                                    noStationAlertShown = true;
+                                }
+                            }).show();
+                }
                 stationListView.setAdapter(new NoStationAdapter(context, address));
             }
             infoBox.setText(resources.getString(R.string.infobox_current_location,
@@ -260,6 +264,7 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
 
         if (isExternalStorageAvailable()){
+            noStationAlertShown = false;
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
             Configuration.getInstance().load(getApplicationContext(), preferences);
             setContentView(R.layout.activity_main);
