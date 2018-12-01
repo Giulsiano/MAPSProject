@@ -160,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements
             stationMap = (showAvailablePlaces) ? cityBikesManager.getNearestFreePlacesFrom(currentLocation) :
                                                  cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
 
+            if (stationMap == null || stationMap.size() == 0) return null;
             // Create the list for the overlay to be added to the map
             // TODO Verify a better method without recurring to this creation every time the doInBackground is called
             publishProgress(ProgressState.MAKE_STATION_LIST);
@@ -216,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements
         protected void onPostExecute (Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>> availabilityMap){
             // stationList is ordered by availability, from no to high
             super.onPostExecute(availabilityMap);
-            if (availabilityMap != null || availabilityMap.size() != 0){
+            if (availabilityMap != null && availabilityMap.size() != 0){
                 infoBox.setText(R.string.infobox_adding_stations);
 
                 // Add markers to the map view choosing the right marker which depends on the availability
