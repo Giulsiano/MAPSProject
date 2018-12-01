@@ -43,8 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-// TODO move OverlayAvailability to BikeDaCityUtils
-
+// TODO move BikeDaCityUtil.Availability to BikeDaCityUtils
+// TODO put settings on bundle 2a-gui.pdf for using the result from Settings3 activity
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity implements
     private LocationBroadcastReceiver locationReceiver;
     private PendingIntent pendingIntent;
     private BuildStationMapTask task;
-    private Map<OverlayAvailability, String> overlayNames;
-    private Map<OverlayAvailability, Drawable> overlayDrawables;
+    private Map<BikeDaCityUtil.Availability, String> overlayNames;
+    private Map<BikeDaCityUtil.Availability, Drawable> overlayDrawables;
     private int[] showVisibleOverlaysButtonBackgroundIds;
 
     private boolean permissionOk;
@@ -78,16 +78,8 @@ public class MainActivity extends AppCompatActivity implements
         COMPUTING_DISTANCES,
         MAKE_STATION_LIST
     }
-
-    // Ordered by crescent priority
-    private enum OverlayAvailability{
-        NO_AVAILABILITY,
-        LOW_AVAILABILITY,
-        MEDIUM_AVAILABILITY,
-        HIGH_AVAILABILITY
-    }
-
-    private class BuildStationMapTask extends AsyncTask<Void, ProgressState, Map<OverlayAvailability, Map<CityBikesStation, String>>> {
+    
+    private class BuildStationMapTask extends AsyncTask<Void, ProgressState, Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>>> {
         ProgressBar progressBar;
         TextView infoBox;
         Button refreshMap;
@@ -142,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         @Override
-        protected Map<OverlayAvailability, Map<CityBikesStation, String>> doInBackground (Void... voids){
+        protected Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>> doInBackground (Void... voids){
             if (cityBikesManager == null){
                 cityBikesManager = new CityBikesManager();
             }
@@ -170,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements
             // Create the list for the overlay to be added to the map
             // TODO Verify a better method without recurring to this creation every time the doInBackground is called
             publishProgress(ProgressState.MAKE_STATION_LIST);
-            Map<OverlayAvailability, Map<CityBikesStation, String>> availabilityMap = new EnumMap<>(OverlayAvailability.class);
+            Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>> availabilityMap = new EnumMap<>(BikeDaCityUtil.Availability.class);
             Map<CityBikesStation, String> noAvailabilityMap = new HashMap<>();
             Map<CityBikesStation, String> lowAvailabilityMap = new HashMap<>();
             Map<CityBikesStation, String> mediumAvailabilityMap = new HashMap<>();
@@ -212,15 +204,15 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
             // Add all map to the list to be returned
-            availabilityMap.put(OverlayAvailability.NO_AVAILABILITY, noAvailabilityMap);
-            availabilityMap.put(OverlayAvailability.LOW_AVAILABILITY, lowAvailabilityMap);
-            availabilityMap.put(OverlayAvailability.MEDIUM_AVAILABILITY, mediumAvailabilityMap);
-            availabilityMap.put(OverlayAvailability.HIGH_AVAILABILITY, highAvailabilityMap);
+            availabilityMap.put(BikeDaCityUtil.Availability.NO_AVAILABILITY, noAvailabilityMap);
+            availabilityMap.put(BikeDaCityUtil.Availability.LOW_AVAILABILITY, lowAvailabilityMap);
+            availabilityMap.put(BikeDaCityUtil.Availability.MEDIUM_AVAILABILITY, mediumAvailabilityMap);
+            availabilityMap.put(BikeDaCityUtil.Availability.HIGH_AVAILABILITY, highAvailabilityMap);
             return availabilityMap;
         }
 
         @Override
-        protected void onPostExecute (Map<OverlayAvailability, Map<CityBikesStation, String>> availabilityMap){
+        protected void onPostExecute (Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>> availabilityMap){
             // stationList is ordered by availability, from no to high
             super.onPostExecute(availabilityMap);
             if (availabilityMap != null || availabilityMap.size() != 0){
@@ -229,7 +221,7 @@ public class MainActivity extends AppCompatActivity implements
                 // Add markers to the map view choosing the right marker which depends on the availability
                 // The String element of the stationMap entry is the description of the station the user can
                 // read when he or she tap to a statation on the map
-                for (OverlayAvailability availability : OverlayAvailability.values()){
+                for (BikeDaCityUtil.Availability availability : BikeDaCityUtil.Availability.values()){
                     mapManager.replaceAllMarkersOn(overlayNames.get(availability),
                             availabilityMap.get(availability),
                             overlayDrawables.get(availability));
@@ -293,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d(TAG, "Getting showAvailablePlaces from savedInstanceState");
                 showAvailablePlaces = savedInstanceState.getBoolean(resources.getString(R.string.pref_show_available_places));
             }
-            overlayNames = getOverlayNames();
+            overlayNames = BikeDaCityUtil.getOverlayNames(this);
             showVisibleOverlaysButtonBackgroundIds = buildShowOptionButtonBackgrounds();
         }
         else {
@@ -312,8 +304,8 @@ public class MainActivity extends AppCompatActivity implements
 
     private int[] buildShowOptionButtonBackgrounds (){
 
-        // This part is application specific, pay attention to the priority order into OverlayAvailability enum
-        int[] backgrounds = new int[OverlayAvailability.values().length << 1];
+        // This part is application specific, pay attention to the priority order into BikeDaCityUtil.Availability enum
+        int[] backgrounds = new int[BikeDaCityUtil.Availability.values().length << 1];
         backgrounds[0] = R.drawable.ic_place_view_all_h24;
         backgrounds[1] = R.drawable.ic_place_view_up_to_low_h24;
         backgrounds[2] = R.drawable.ic_place_view_up_to_medium_h24;
@@ -327,41 +319,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private int getShowOptionButtonBackground (int idx){
         return showVisibleOverlaysButtonBackgroundIds[(showAvailablePlaces) ? idx :
-                                                                   idx + OverlayAvailability.values().length];
-    }
-
-    private Map<OverlayAvailability, String> getOverlayNames (){
-        Map<OverlayAvailability, String> overlayNames = new EnumMap<>(OverlayAvailability.class);
-        overlayNames.put(OverlayAvailability.NO_AVAILABILITY, resources.getString(R.string.no_availability_overlay_name));
-        overlayNames.put(OverlayAvailability.LOW_AVAILABILITY, resources.getString(R.string.low_availability_overlay_name));
-        overlayNames.put(OverlayAvailability.MEDIUM_AVAILABILITY, resources.getString(R.string.medium_availability_overlay_name));
-        overlayNames.put(OverlayAvailability.HIGH_AVAILABILITY, resources.getString(R.string.high_availability_overlay_name));
-        return overlayNames;
-    }
-
-    private Map<OverlayAvailability, Drawable> getOverlayDrawables (){
-        Map<OverlayAvailability, Drawable> drawables = new EnumMap<>(OverlayAvailability.class);
-        if (showAvailablePlaces){
-            drawables.put(OverlayAvailability.NO_AVAILABILITY,
-                          resources.getDrawable(R.drawable.ic_place_no_availability));
-            drawables.put(OverlayAvailability.LOW_AVAILABILITY,
-                          resources.getDrawable(R.drawable.ic_place_low_availability));
-            drawables.put(OverlayAvailability.MEDIUM_AVAILABILITY,
-                          resources.getDrawable(R.drawable.ic_place_medium_availability));
-            drawables.put(OverlayAvailability.HIGH_AVAILABILITY,
-                          resources.getDrawable(R.drawable.ic_place_high_availability));
-        }
-        else {
-            drawables.put(OverlayAvailability.NO_AVAILABILITY,
-                          resources.getDrawable(R.drawable.ic_free_bike_no_availability));
-            drawables.put(OverlayAvailability.LOW_AVAILABILITY,
-                          resources.getDrawable(R.drawable.ic_free_bike_low_availability));
-            drawables.put(OverlayAvailability.MEDIUM_AVAILABILITY,
-                          resources.getDrawable(R.drawable.ic_free_bike_medium_availability));
-            drawables.put(OverlayAvailability.HIGH_AVAILABILITY,
-                          resources.getDrawable(R.drawable.ic_free_bike_high_availability));
-        }
-        return drawables;
+                                                                   idx + BikeDaCityUtil.Availability.values().length];
     }
 
     private PendingIntent createPendingIntent () {
@@ -456,7 +414,7 @@ public class MainActivity extends AppCompatActivity implements
     public void onResume (){
         super.onResume();
         mapManager.onResume();
-        overlayDrawables = getOverlayDrawables();
+        overlayDrawables = BikeDaCityUtil.getOverlayDrawables(this, showAvailablePlaces);
 
         // Get values saved into onPause(), if they don't exist take values from preferences
         visibleOverlayCounter = preferences.getInt(
@@ -572,7 +530,7 @@ public class MainActivity extends AppCompatActivity implements
     public void addVisibleOverlay (View v){
         List<String> nameList = new LinkedList<>();
         visibleOverlayCounter %= overlayNames.size();
-        OverlayAvailability[] knownOverlay = OverlayAvailability.values();
+        BikeDaCityUtil.Availability[] knownOverlay = BikeDaCityUtil.Availability.values();
 
         // Set from higher to lower priority depending on the number of tap the user does
         for (int i = knownOverlay.length - 1; i >= visibleOverlayCounter; --i){

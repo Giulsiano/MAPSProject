@@ -4,7 +4,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.support.v4.app.ActivityCompat;
+
+import java.util.EnumMap;
+import java.util.Map;
 
 public class BikeDaCityUtil {
     public static AlertDialog createAlertDialogWithPositiveButtonOnly (Context context,
@@ -48,6 +53,48 @@ public class BikeDaCityUtil {
                 });
     }
 
+    // Ordered by crescent priority
+    public enum Availability{
+        NO_AVAILABILITY,
+        LOW_AVAILABILITY,
+        MEDIUM_AVAILABILITY,
+        HIGH_AVAILABILITY
+    }
+
+    public static Map<Availability, Drawable> getOverlayDrawables (Context ctx, boolean showAvailablePlaces){
+        Map<Availability, Drawable> drawables = new EnumMap<>(Availability.class);
+        Resources resources = ctx.getResources();
+        if (showAvailablePlaces){
+            drawables.put(Availability.NO_AVAILABILITY,
+                    resources.getDrawable(R.drawable.ic_place_no_availability));
+            drawables.put(Availability.LOW_AVAILABILITY,
+                    resources.getDrawable(R.drawable.ic_place_low_availability));
+            drawables.put(Availability.MEDIUM_AVAILABILITY,
+                    resources.getDrawable(R.drawable.ic_place_medium_availability));
+            drawables.put(Availability.HIGH_AVAILABILITY,
+                    resources.getDrawable(R.drawable.ic_place_high_availability));
+        }
+        else {
+            drawables.put(Availability.NO_AVAILABILITY,
+                    resources.getDrawable(R.drawable.ic_free_bike_no_availability));
+            drawables.put(Availability.LOW_AVAILABILITY,
+                    resources.getDrawable(R.drawable.ic_free_bike_low_availability));
+            drawables.put(Availability.MEDIUM_AVAILABILITY,
+                    resources.getDrawable(R.drawable.ic_free_bike_medium_availability));
+            drawables.put(Availability.HIGH_AVAILABILITY,
+                    resources.getDrawable(R.drawable.ic_free_bike_high_availability));
+        }
+        return drawables;
+    }
 
 
+    public static Map<BikeDaCityUtil.Availability, String> getOverlayNames (Context ctx){
+        Resources resources = ctx.getResources();
+        Map<BikeDaCityUtil.Availability, String> overlayNames = new EnumMap<>(BikeDaCityUtil.Availability.class);
+        overlayNames.put(BikeDaCityUtil.Availability.NO_AVAILABILITY, resources.getString(R.string.no_availability_overlay_name));
+        overlayNames.put(BikeDaCityUtil.Availability.LOW_AVAILABILITY, resources.getString(R.string.low_availability_overlay_name));
+        overlayNames.put(BikeDaCityUtil.Availability.MEDIUM_AVAILABILITY, resources.getString(R.string.medium_availability_overlay_name));
+        overlayNames.put(BikeDaCityUtil.Availability.HIGH_AVAILABILITY, resources.getString(R.string.high_availability_overlay_name));
+        return overlayNames;
+    }
 }
