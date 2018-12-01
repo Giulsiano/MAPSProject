@@ -528,6 +528,11 @@ public class MainActivity extends AppCompatActivity implements
                     // If user taps the menuItem then they want the app to show the other one mode, where
                     // mode is one of available places or free bikes
                     showAvailablePlaces = !showAvailablePlaces;
+                    showOptionItem.setTitle(showAvailablePlaces ?
+                            resources.getString(R.string.show_free_bikes_entry) :
+                            resources.getString(R.string.show_available_places_entry));
+                    task = new BuildStationMapTask(this);
+                    task.execute();
                 }
                 else {
                     Toast.makeText(this, resources.getString(R.string.toast_running_task),
