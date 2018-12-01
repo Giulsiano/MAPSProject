@@ -508,6 +508,7 @@ public class MainActivity extends AppCompatActivity implements
         }
         catch (IllegalArgumentException e){
             // Location Receiver has not been registered yet
+            Log.e(TAG, "Location receiver not registered");
         }
     }
 
