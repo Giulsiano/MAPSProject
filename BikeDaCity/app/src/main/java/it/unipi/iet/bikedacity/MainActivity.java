@@ -260,6 +260,19 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    private void initMapManager (){
+        mapManager = new OSMapManager(this, (MapView) findViewById(R.id.map));
+        String[] zoomValues = resources.getStringArray(R.array.pref_zoom_values);
+
+        // Suppose that zoom values are increasingly ordered
+        double minZoom = Double.parseDouble(zoomValues[0]);
+        double maxZoom = Double.parseDouble(zoomValues[zoomValues.length - 1]);
+        double defaultZoom = Double.parseDouble(resources.getString(R.string.default_zoom_value));
+        mapManager.setMaxZoom(maxZoom);
+        mapManager.setMinZoom(minZoom);
+        mapManager.setDefaultZoom(defaultZoom);
+    }
+
     @Override
     protected void onCreate (Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -277,8 +290,9 @@ public class MainActivity extends AppCompatActivity implements
             stationListView = findViewById(R.id.station_list);
             stationListView.setHasFixedSize(true);
             stationListView.setLayoutManager(new LinearLayoutManager(this));
-            mapManager = new OSMapManager(this, (MapView) findViewById(R.id.map));
             permissionOk = false;
+
+            initMapManager();
 
             if (savedInstanceState == null){
                 Log.d(TAG, "Getting showAvailablePlaces from preferences");
@@ -373,8 +387,8 @@ public class MainActivity extends AppCompatActivity implements
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.main_menu, menu);
         showOptionItem = menu.findItem(R.id.show_option);
-        showOptionItem.setTitle(showAvailablePlaces ? resources.getString(R.string.show_available_places_entry) :
-                                                      resources.getString(R.string.show_free_bikes_entry));
+        showOptionItem.setTitle(showAvailablePlaces ? resources.getString(R.string.show_free_bikes_entry) :
+                                                    resources.getString(R.string.show_available_places_entry));
         return true;
     }
 
@@ -427,10 +441,10 @@ public class MainActivity extends AppCompatActivity implements
                                 resources.getString(R.string.pref_visible_overlays),
                                 Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
                                                       resources.getString(R.string.default_view_station_value))));
-        mapManager.setDefaultZoom(
-                (double) preferences.getFloat(resources.getString(R.string.pref_zoom),
-                                              Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
-                                                               resources.getString(R.string.default_zoom_value)))));
+        double zoomLevel = (double) preferences.getFloat(resources.getString(R.string.pref_zoom),
+                Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
+                        resources.getString(R.string.default_zoom_value))));
+        mapManager.setDefaultZoom(zoomLevel);
         Button showOptionButton = findViewById(R.id.view_overlay_button);
         showOptionButton.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -589,44 +603,17 @@ public class MainActivity extends AppCompatActivity implements
 
                 task = new BuildStationMapTask(context);
                 task.execute();
-
-// This have to rethinked a bit, maybe it is useful to show the toast when the refresh map has tapped
-//                // It could happen a location update before the task has finished its job. This could potentially
-//                // make a new task running and concurrently changing the data structures of the map.
-//                if (task == null || task.getStatus() != AsyncTask.Status.RUNNING){
-//                    task = new BuildStationMapTask(context);
-//                    task.execute();
-//                }
-//                else if (task.getStatus() == AsyncTask.Status.RUNNING){
-//                    Toast.makeText(context, resources.getString(R.string.toast_running_task),
-//                            Toast.LENGTH_SHORT).show();
-//                }
-//                else if (task.getStatus() == AsyncTask.Status.PENDING){
-//                    Toast.makeText(context, resources.getString(R.string.toast_pending_task),
-//                            Toast.LENGTH_SHORT).show();
-//                }
             }
         }
 
-        public void onProviderEnabled (Context context){
+        public void onProviderEnabled (Context context){ }
 
-        }
+        public void onProviderDisabled (Context context){ }
 
-        public void onProviderDisabled (Context context){
+        public void onEnteringProximity (Context context){ }
 
-        }
+        public void onExitingProximity (Context context){ }
 
-        public void onEnteringProximity (Context context){
-
-        }
-
-        public void onExitingProximity (Context context){
-
-        }
-
-        public void onStatusChanged (){
-
-        }
-
+        public void onStatusChanged (){ }
     }
 }
