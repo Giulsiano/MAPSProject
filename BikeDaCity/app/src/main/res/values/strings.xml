@@ -36,8 +36,8 @@
     your location and without writing to the external storage. Please reconsider to grant it access.</string>
     <string name="err_dialog_perm_not_granted_button">Exit</string>
     <string name="err_dialog_no_city_found_title">No bikes</string>
-    <string name="err_dialog_no_city_found_message">BikeDaCity isn\'t able to find a bike sharing service here</string>
-    <string name="err_dialog_no_city_found_button">Exit</string>
+    <string name="err_dialog_no_city_found_message">BikeDaCity isn\'t able to find a bike sharing service here.\nSome features has been disabled</string>
+    <string name="err_dialog_no_city_found_button">OK, I read</string>
 
     <!-- Alert dialog for permissions rationale -->
     <string name="perm_dialog_title">Why Permissions?</string>
