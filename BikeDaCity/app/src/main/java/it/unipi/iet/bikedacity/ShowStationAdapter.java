@@ -67,13 +67,6 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
         return stations;
     }
 
-    private List<Station> getStations (){
-        if (stations == null){
-            stations = createStationList();
-        }
-        return stations;
-    }
-
     @NonNull
     @Override
     public StationViewHolder onCreateViewHolder (@NonNull ViewGroup parent, int viewType) {
