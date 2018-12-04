@@ -43,8 +43,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-// TODO move BikeDaCityUtil.Availability to BikeDaCityUtils
-// TODO put settings on bundle 2a-gui.pdf for using the result from Settings3 activity
+// TODO Fix address problem when city doesn't have any service
+// TODO Fix change background button and overlay problem
+// TODO move to the util class some of the finisher alert dialog
+// TODO fix change location problem when goes to a city with a service to one without it
+// TODO RecyclerView has to shown stations by availability change the drawable of each station based on availability
+
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -139,9 +143,6 @@ public class MainActivity extends AppCompatActivity implements
 
         @Override
         protected Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>> doInBackground (Void... voids){
-            if (cityBikesManager == null){
-                cityBikesManager = new CityBikesManager();
-            }
             String city = cityBikesManager.getCity();
             if (city == null){
                 publishProgress(ProgressState.REQUEST_CITY);
@@ -164,14 +165,18 @@ public class MainActivity extends AppCompatActivity implements
                                                  cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
 
             if (stationMap == null || stationMap.size() == 0) return null;
-            // Create the list for the overlay to be added to the map
-            // TODO Verify a better method without recurring to this creation every time the doInBackground is called
+
+            // Create the list of overlay which will be added to the map. stationNumber is the initial capacity
+            // for the HashMap to avoid resize of the HashMap itself and for gaining some performance hopefully
+            int stationNumber = stationMap.size();
             publishProgress(ProgressState.MAKE_STATION_LIST);
-            Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>> availabilityMap = new EnumMap<>(BikeDaCityUtil.Availability.class);
-            Map<CityBikesStation, String> noAvailabilityMap = new HashMap<>();
-            Map<CityBikesStation, String> lowAvailabilityMap = new HashMap<>();
-            Map<CityBikesStation, String> mediumAvailabilityMap = new HashMap<>();
-            Map<CityBikesStation, String> highAvailabilityMap = new HashMap<>();
+            Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>> availabilityMap =
+                    new EnumMap<>(BikeDaCityUtil.Availability.class);
+
+            Map<CityBikesStation, String> noAvailabilityMap = new HashMap<>(stationNumber);
+            Map<CityBikesStation, String> lowAvailabilityMap = new HashMap<>(stationNumber);
+            Map<CityBikesStation, String> mediumAvailabilityMap = new HashMap<>(stationNumber);
+            Map<CityBikesStation, String> highAvailabilityMap = new HashMap<>(stationNumber);
 
             String description;
             for (Integer distance : stationMap.keySet()){
@@ -294,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements
             stationListView.setHasFixedSize(true);
             stationListView.setLayoutManager(new LinearLayoutManager(this));
             permissionOk = false;
-
+            cityBikesManager = new CityBikesManager();
             initMapManager();
 
             if (savedInstanceState == null){
@@ -539,7 +544,7 @@ public class MainActivity extends AppCompatActivity implements
         locationReceiver.onLocationChanged(this, currentLocation);
     }
 
-    public void centreMapOnCurrentLocation (View v){
+    public void centreMapOnMyPosition (View v){
         mapManager.moveCameraTo(currentLocation);
     }
 
