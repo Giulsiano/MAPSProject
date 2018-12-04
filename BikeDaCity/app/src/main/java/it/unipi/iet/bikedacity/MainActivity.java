@@ -306,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements
                 isShowingParking = savedInstanceState.getBoolean(resources.getString(R.string.pref_show_available_places));
             }
             overlayNames = BikeDaCityUtil.getOverlayNames(this);
-            showVisibleOverlaysButtonBackgroundIds = buildShowOptionButtonBackgrounds();
+            showVisibleOverlaysButtonBackgroundIds = BikeDaCityUtil.getOverlayButtonDrawables();
         }
         else {
             BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
@@ -320,21 +320,6 @@ public class MainActivity extends AppCompatActivity implements
                         }
                     }).show();
         }
-    }
-
-    private int[] buildShowOptionButtonBackgrounds (){
-
-        // This part is application specific, pay attention to the priority order into BikeDaCityUtil.Availability enum
-        int[] backgrounds = new int[BikeDaCityUtil.Availability.values().length << 1];
-        backgrounds[0] = R.drawable.ic_place_view_all_h24;
-        backgrounds[1] = R.drawable.ic_place_view_up_to_low_h24;
-        backgrounds[2] = R.drawable.ic_place_view_up_to_medium_h24;
-        backgrounds[3] = R.drawable.ic_place_view_high_h24;
-        backgrounds[4] = R.drawable.ic_free_bike_view_all_h24;
-        backgrounds[5] = R.drawable.ic_free_bike_view_up_to_low_h24;
-        backgrounds[6] = R.drawable.ic_free_bike_view_up_to_medium_h24;
-        backgrounds[7] = R.drawable.ic_free_bike_view_high_h24;
-        return backgrounds;
     }
 
     private int getShowOptionButtonBackground (int idx){
