@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements
     private boolean permissionOk;
     private boolean isFirstFix;
     private boolean noStationAlertShown;
-    private boolean showAvailablePlaces;
+    private boolean isShowingParking;
     private int visibleOverlayCounter;
 
     private static final int REQUEST_PERMISSIONS = 0;
@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements
             }
             // Get ordered stations
             publishProgress(ProgressState.COMPUTING_DISTANCES);
-            stationMap = (showAvailablePlaces) ? cityBikesManager.getNearestFreePlacesFrom(currentLocation) :
+            stationMap = (isShowingParking) ? cityBikesManager.getNearestFreePlacesFrom(currentLocation) :
                                                  cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
 
             if (stationMap == null || stationMap.size() == 0) return null;
@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements
                 for (CityBikesStation station : stationMap.get(distance)){
                     Map<CityBikesStation, String> map = null;
                     String availability = null;
-                    switch ((showAvailablePlaces) ? station.getFreePlacesLevel() :
+                    switch ((isShowingParking) ? station.getFreePlacesLevel() :
                                                     station.getAvailableBikesLevel()){
                         case NO:
                             map = noAvailabilityMap;
@@ -232,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements
                 stationListView.setAdapter(new ShowStationAdapter(context,
                         stationMap,
                         mapManager.getMapView(),
-                        showAvailablePlaces));
+                        isShowingParking));
                 stationListView.invalidate();
                 visibleOverlayButton.setEnabled(true);
             }
@@ -295,15 +295,15 @@ public class MainActivity extends AppCompatActivity implements
             initMapManager();
 
             if (savedInstanceState == null){
-                Log.d(TAG, "Getting showAvailablePlaces from preferences");
+                Log.d(TAG, "Getting isShowingParking from preferences");
                 String defaultView = preferences.getString(resources.getString(R.string.default_view_list_key),
                                                            resources.getString(R.string.default_pref_view_value));
-                showAvailablePlaces = defaultView.equals(resources.getString(R.string.default_pref_view_value));
+                isShowingParking = defaultView.equals(resources.getString(R.string.default_pref_view_value));
 
             }
             else {
-                Log.d(TAG, "Getting showAvailablePlaces from savedInstanceState");
-                showAvailablePlaces = savedInstanceState.getBoolean(resources.getString(R.string.pref_show_available_places));
+                Log.d(TAG, "Getting isShowingParking from savedInstanceState");
+                isShowingParking = savedInstanceState.getBoolean(resources.getString(R.string.pref_show_available_places));
             }
             overlayNames = BikeDaCityUtil.getOverlayNames(this);
             showVisibleOverlaysButtonBackgroundIds = buildShowOptionButtonBackgrounds();
@@ -338,8 +338,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private int getShowOptionButtonBackground (int idx){
-        return showVisibleOverlaysButtonBackgroundIds[(showAvailablePlaces) ? idx :
-                                                                   idx + BikeDaCityUtil.Availability.values().length];
+        return showVisibleOverlaysButtonBackgroundIds[(isShowingParking) ?
+                idx : idx + BikeDaCityUtil.Availability.values().length];
     }
 
     private PendingIntent createPendingIntent () {
@@ -387,7 +387,7 @@ public class MainActivity extends AppCompatActivity implements
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.main_menu, menu);
         showOptionItem = menu.findItem(R.id.show_option);
-        showOptionItem.setTitle(showAvailablePlaces ? resources.getString(R.string.show_free_bikes_entry) :
+        showOptionItem.setTitle(isShowingParking ? resources.getString(R.string.show_free_bikes_entry) :
                                                     resources.getString(R.string.show_available_places_entry));
         return true;
     }
@@ -434,7 +434,7 @@ public class MainActivity extends AppCompatActivity implements
     public void onResume (){
         super.onResume();
         mapManager.onResume();
-        overlayDrawables = BikeDaCityUtil.getOverlayDrawables(this, showAvailablePlaces);
+        overlayDrawables = BikeDaCityUtil.getOverlayDrawables(this, isShowingParking);
 
         // Get values saved into onPause(), if they don't exist take values from preferences
         visibleOverlayCounter = preferences.getInt(
@@ -445,6 +445,8 @@ public class MainActivity extends AppCompatActivity implements
                 Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
                         resources.getString(R.string.default_zoom_value))));
         mapManager.setDefaultZoom(zoomLevel);
+
+        // Set the background and check if the provider is available
         Button showOptionButton = findViewById(R.id.view_overlay_button);
         showOptionButton.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -494,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements
         super.onPause();
         mapManager.onPause();
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean(resources.getString(R.string.pref_show_available_places), showAvailablePlaces);
+        editor.putBoolean(resources.getString(R.string.pref_show_available_places), isShowingParking);
         editor.putInt(resources.getString(R.string.pref_visible_overlays), visibleOverlayCounter);
         editor.putFloat(resources.getString(R.string.pref_zoom), (float) mapManager.getCurrentZoomLevel());
         editor.apply();
@@ -527,8 +529,8 @@ public class MainActivity extends AppCompatActivity implements
                 if (task == null || task.getStatus() != AsyncTask.Status.RUNNING){
                     // If user taps the menuItem then they want the app to show the other one mode, where
                     // mode is one of available places or free bikes
-                    showAvailablePlaces = !showAvailablePlaces;
-                    showOptionItem.setTitle(showAvailablePlaces ?
+                    isShowingParking = !isShowingParking;
+                    showOptionItem.setTitle(isShowingParking ?
                             resources.getString(R.string.show_free_bikes_entry) :
                             resources.getString(R.string.show_available_places_entry));
                     task = new BuildStationMapTask(this);

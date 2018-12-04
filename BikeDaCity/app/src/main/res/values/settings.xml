@@ -97,7 +97,7 @@
     <string name="pref_zoom_summary">1:500.000 means 1 cm is equal to 50.000 cm (500 m) in reality</string>
 
     <!-- Key used for getting the app's state restored when paused or something else -->
-    <string name="pref_show_available_places">showAvailablePlaces</string>
+    <string name="pref_show_available_places">isShowingParking</string>
     <string name="pref_visible_overlays">visibleOverlays</string>
     <string name="pref_zoom">userSetZoom</string>
 

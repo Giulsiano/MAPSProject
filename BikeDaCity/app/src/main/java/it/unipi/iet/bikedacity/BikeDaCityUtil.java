@@ -61,10 +61,10 @@ public class BikeDaCityUtil {
         HIGH_AVAILABILITY
     }
 
-    public static Map<Availability, Drawable> getOverlayDrawables (Context ctx, boolean showAvailablePlaces){
+    public static Map<Availability, Drawable> getOverlayDrawables (Context ctx, boolean isShowingParking){
         Map<Availability, Drawable> drawables = new EnumMap<>(Availability.class);
         Resources resources = ctx.getResources();
-        if (showAvailablePlaces){
+        if (isShowingParking){
             drawables.put(Availability.NO_AVAILABILITY,
                     resources.getDrawable(R.drawable.ic_place_no_availability));
             drawables.put(Availability.LOW_AVAILABILITY,
