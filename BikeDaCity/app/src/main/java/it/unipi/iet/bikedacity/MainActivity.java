@@ -552,12 +552,12 @@ public class MainActivity extends AppCompatActivity implements
 
     public void addVisibleOverlay (View v){
         List<String> nameList = new LinkedList<>();
-        visibleOverlayCounter %= overlayNames.size();
-        BikeDaCityUtil.Availability[] knownOverlay = BikeDaCityUtil.Availability.values();
+        visibleOverlayCounter = (++visibleOverlayCounter) % overlayNames.size();
+        BikeDaCityUtil.Availability[] knownOverlays = BikeDaCityUtil.Availability.values();
 
         // Set from higher to lower priority depending on the number of tap the user does
-        for (int i = knownOverlay.length - 1; i >= visibleOverlayCounter; --i){
-            nameList.add(overlayNames.get(knownOverlay[i]));
+        for (int i = knownOverlays.length - 1; i >= visibleOverlayCounter; --i){
+            nameList.add(overlayNames.get(knownOverlays[i]));
         }
         nameList.add(resources.getString(R.string.current_location_overlay_name));
         mapManager.setVisibleOverlays(nameList);
