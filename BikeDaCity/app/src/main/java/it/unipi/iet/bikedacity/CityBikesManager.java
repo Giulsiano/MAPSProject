@@ -27,15 +27,20 @@ public class CityBikesManager {
     private String city;
     private List<CityBikesStation> stations;
 
-    // TODO add storing networks' JSON to a file
     public CityBikesManager (String city){
         downloader = new CityBikesDownloader();
         this.city = city;
     }
 
     public CityBikesManager(){
-        downloader = new CityBikesDownloader();
-        this.city = null;
+        this(null);
+    }
+
+    public boolean cityHasBikeService() {
+        if (city != null) {
+            return stations == null || stations.size() == 0;
+        }
+        throw new NullPointerException("City is null");
     }
 
     public List<CityBikesStation> getStations () {
