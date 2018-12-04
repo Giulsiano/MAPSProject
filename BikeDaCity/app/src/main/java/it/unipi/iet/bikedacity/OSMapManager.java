@@ -128,19 +128,7 @@ public class OSMapManager{
      * @param marker the icon which will be shown on the map
      */
     public void addMyPositionMarker (Location location, Drawable marker){
-        ItemizedIconOverlay<OverlayItem> defaultOverlay = overlayMap.get(MY_POSITION_OVERLAY_NAME);
-
-        if (defaultOverlay == null){
-            // There is no position overlay, so create the item list and the default overlay
-            defaultOverlay = new ItemizedIconOverlay<>(buildMyPositionMarker(location, marker),
-                                                       marker,
-                                                       defaultGestureListener,
-                                                       context);
-            overlayMap.put(MY_POSITION_OVERLAY_NAME, defaultOverlay);
-        }
-        else {
-            defaultOverlay.addItems(buildMyPositionMarker(location, marker));
-        }
+        addMyPositionMarkerOn(MY_POSITION_OVERLAY_NAME, location, marker);
     }
 
     public void addMyPositionMarkerOn (String overlayName, Location location, Drawable marker){
@@ -149,7 +137,11 @@ public class OSMapManager{
             overlay.addItems(buildMyPositionMarker(location, marker));
         }
         else {
-            addMyPositionMarker(location, marker);
+            overlay = new ItemizedIconOverlay<>(buildMyPositionMarker(location, marker),
+                    marker,
+                    defaultGestureListener,
+                    context);
+            overlayMap.put(overlayName, overlay);
         }
     }
 
@@ -189,11 +181,8 @@ public class OSMapManager{
     }
 
     public void replaceMyPositionMarkerOn (String overlayName, Location myPosition, Drawable drawable){
-        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
-        if (overlay != null) {
-            removeMyPositionMarkerOn(overlayName);
-            addMyPositionMarkerOn(overlayName, myPosition, drawable);
-        }
+        removeMyPositionMarkerOn(overlayName);
+        addMyPositionMarkerOn(overlayName, myPosition, drawable);
     }
 
     public void removeMyPositionMarkerOn (String overlayName){

@@ -111,9 +111,12 @@ public class MainActivity extends AppCompatActivity implements
             refreshMap.setEnabled(false);
             visibleOverlayButton.setEnabled(false);
             infoBox.setText(R.string.infobox_starting_text);
-            mapManager.replaceMyPositionMarker(currentLocation,
-                    resources.getDrawable(R.drawable.ic_place_24px));
-            mapManager.setMyPositionOverlayVisibility(true);
+
+            String myPositionOverlayName = resources.getString(R.string.current_location_overlay_name);
+            mapManager.replaceMyPositionMarkerOn(myPositionOverlayName,
+                                                 currentLocation,
+                                                 resources.getDrawable(R.drawable.ic_place_24px));
+            mapManager.setOverlayVisibility(myPositionOverlayName, true);
         }
 
         @Override
@@ -227,8 +230,8 @@ public class MainActivity extends AppCompatActivity implements
                     mapManager.replaceAllMarkersOn(overlayNames.get(availability),
                             availabilityMap.get(availability),
                             overlayDrawables.get(availability));
-                    mapManager.setOverlayVisibility(overlayNames.get(availability), true);
                 }
+
                 stationListView.setAdapter(new ShowStationAdapter(context,
                         stationMap,
                         mapManager.getMapView(),
