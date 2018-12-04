@@ -528,6 +528,8 @@ public class MainActivity extends AppCompatActivity implements
                             resources.getString(R.string.show_available_places_entry));
                     task = new BuildStationMapTask(this);
                     task.execute();
+                    Button visibleOverlayButton = findViewById(R.id.view_overlay_button);
+                    visibleOverlayButton.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
                 }
                 else {
                     Toast.makeText(this, resources.getString(R.string.toast_running_task),
