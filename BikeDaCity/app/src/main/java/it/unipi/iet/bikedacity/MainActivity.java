@@ -596,17 +596,15 @@ public class MainActivity extends AppCompatActivity implements
 
         public void onLocationChanged (Context context, Location location){
 
-            if (currentLocation == null || !currentLocation.equals(location)){
-                currentLocation = location;
+            currentLocation = location;
 
-                if (isFirstFix){
-                    mapManager.moveCameraTo(currentLocation);
-                    isFirstFix = false;
-                }
-
-                task = new BuildStationMapTask(context);
-                task.execute();
+            if (isFirstFix){
+                mapManager.moveCameraTo(currentLocation);
+                isFirstFix = false;
             }
+
+            task = new BuildStationMapTask(context);
+            task.execute();
         }
 
         public void onProviderEnabled (Context context){ }
