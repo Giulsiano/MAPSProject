@@ -61,6 +61,28 @@ public class BikeDaCityUtil {
         HIGH_AVAILABILITY
     }
 
+    public static int getOverlayDrawableId (Availability availability, boolean isShowingParking){
+        return getOverlayDrawablesIds(isShowingParking).get(availability);
+    }
+
+    public static Map<Availability, Integer> getOverlayDrawablesIds (boolean isShowingParking){
+        Map<Availability, Integer> idsMap = new EnumMap<>(Availability.class);
+        if (isShowingParking){
+            idsMap.put(Availability.NO_AVAILABILITY, R.drawable.ic_place_no_availability);
+            idsMap.put(Availability.LOW_AVAILABILITY, R.drawable.ic_place_low_availability);
+            idsMap.put(Availability.MEDIUM_AVAILABILITY, R.drawable.ic_place_medium_availability);
+            idsMap.put(Availability.HIGH_AVAILABILITY, R.drawable.ic_place_high_availability);
+        }
+        else {
+            idsMap.put(Availability.NO_AVAILABILITY, R.drawable.ic_free_bike_no_availability);
+            idsMap.put(Availability.LOW_AVAILABILITY, R.drawable.ic_free_bike_low_availability);
+            idsMap.put(Availability.MEDIUM_AVAILABILITY, R.drawable.ic_free_bike_medium_availability);
+            idsMap.put(Availability.HIGH_AVAILABILITY, R.drawable.ic_free_bike_high_availability);
+        }
+
+        return idsMap;
+    }
+
     public static Map<Availability, Drawable> getOverlayDrawables (Context ctx, boolean isShowingParking){
         Map<Availability, Drawable> drawables = new EnumMap<>(Availability.class);
         Resources resources = ctx.getResources();
