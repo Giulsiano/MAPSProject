@@ -44,11 +44,11 @@ import java.util.Map;
 import java.util.SortedMap;
 
 // TODO Fix address problem when city doesn't have any service
+// TODO Fix change drawables on the map when the menu item is selected
 // TODO Fix change background button and overlay problem
 // TODO move to the util class some of the finisher alert dialog
 // TODO fix change location problem when goes to a city with a service to one without it
-// TODO RecyclerView has to shown stations by availability change the drawable of each station based on availability
-
+// TODO fix zoom when application starts
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -185,22 +185,22 @@ public class MainActivity extends AppCompatActivity implements
                     String availability = null;
                     switch ((isShowingParking) ? station.getFreePlacesLevel() :
                                                     station.getAvailableBikesLevel()){
-                        case NO:
+                        case NO_AVAILABILITY:
                             map = noAvailabilityMap;
                             availability = "NO";
                             break;
 
-                        case LOW:
+                        case LOW_AVAILABILITY:
                             map = lowAvailabilityMap;
                             availability = "Low";
                             break;
 
-                        case MEDIUM:
+                        case MEDIUM_AVAILABILITY:
                             map = mediumAvailabilityMap;
                             availability = "Medium";
                             break;
 
-                        case HIGH:
+                        case HIGH_AVAILABILITY:
                             map = highAvailabilityMap;
                             availability = "High";
                             break;

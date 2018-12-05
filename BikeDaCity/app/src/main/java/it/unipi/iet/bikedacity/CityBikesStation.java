@@ -24,15 +24,8 @@ public class CityBikesStation {
     private String description;
     private Boolean isOnline;
 
-    public enum Availability {
-        HIGH,
-        MEDIUM,
-        LOW,
-        NO,
-    }
-
-    private Availability freePlacesLevel;
-    private Availability availableBikesLevel;
+    private BikeDaCityUtil.Availability freePlacesLevel;
+    private BikeDaCityUtil.Availability availableBikesLevel;
 
     public CityBikesStation(JSONObject jsonObject) throws JSONException {
         name = jsonObject.getString("name");
@@ -78,25 +71,25 @@ public class CityBikesStation {
         }
     };
 
-    private Availability getLevelOf (int it){
+    private BikeDaCityUtil.Availability getLevelOf (int it){
         if (it == 0){
-            return Availability.NO;
+            return BikeDaCityUtil.Availability.NO_AVAILABILITY;
         }
         if (it <= lowThreshold){
-            return Availability.LOW;
+            return BikeDaCityUtil.Availability.LOW_AVAILABILITY;
         }
         if (it <= mediumThreshold){
-            return Availability.MEDIUM;
+            return BikeDaCityUtil.Availability.MEDIUM_AVAILABILITY;
         }
-        else return Availability.HIGH;
+        else return BikeDaCityUtil.Availability.HIGH_AVAILABILITY;
     }
 
-    public Availability getAvailableBikesLevel () {
+    public BikeDaCityUtil.Availability getAvailableBikesLevel () {
         availableBikesLevel = getLevelOf(freeBikes);
         return availableBikesLevel;
     }
 
-    public Availability getFreePlacesLevel () {
+    public BikeDaCityUtil.Availability getFreePlacesLevel () {
         freePlacesLevel = getLevelOf(emptySlots);
         return freePlacesLevel;
     }
