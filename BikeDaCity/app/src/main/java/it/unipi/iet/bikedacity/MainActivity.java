@@ -235,6 +235,7 @@ public class MainActivity extends AppCompatActivity implements
                     mapManager.replaceAllMarkersOn(overlayNames.get(availability),
                             availabilityMap.get(availability),
                             overlayDrawables.get(availability));
+                    mapManager.setOverlayVisibility(overlayNames.get(availability), true);
                 }
 
                 stationListView.setAdapter(new ShowStationAdapter(context,
