@@ -1,8 +1,10 @@
 package it.unipi.iet.bikedacity;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.location.Location;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -25,15 +27,22 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
     private List<Station> stations;
     private Context context;
     private MapView map;
-    private boolean showAvailablePlaces;
+    private boolean isShowingParking;
+    private final long animationDuration = 1000L;
+    private double zoom;
 
     public ShowStationAdapter (Context context, SortedMap<Integer, List<CityBikesStation>> distanceMap,
-                               MapView map, boolean showAvailablePlaces){
+                               MapView map, boolean isShowingParking){
         dataSource = distanceMap;
         stations = null;
         this.context = context;
         this.map = map;
-        this.showAvailablePlaces = showAvailablePlaces;
+        this.isShowingParking = isShowingParking;
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        Resources resources = context.getResources();
+        zoom = (double) preferences.getFloat(resources.getString(R.string.pref_zoom),
+                Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
+                        resources.getString(R.string.default_zoom_value))));
     }
 
     private class Station {
@@ -87,19 +96,25 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
         String distance = res.getString(R.string.station_list_distance, station.getDistance());
         String name = station.getCityBikeStation().getName();
         String availability;
-        if (showAvailablePlaces){
+        int backgroundId;
+        if (isShowingParking){
             availability = res.getString(R.string.station_list_availability,
                                          station.getCityBikeStation().getEmptySlots(),
                                          res.getString(R.string.station_list_free_places));
+            backgroundId = BikeDaCityUtil.getOverlayDrawableId(station.getCityBikeStation().getFreePlacesLevel(),
+                                                               isShowingParking);
         }
         else {
             availability = res.getString(R.string.station_list_availability,
                                          station.getCityBikeStation().getFreeBikes(),
                                          res.getString(R.string.station_list_free_bikes));
+            backgroundId = BikeDaCityUtil.getOverlayDrawableId(station.getCityBikeStation().getAvailableBikesLevel(),
+                                                               isShowingParking);
         }
         String details = res.getString(R.string.station_list_details, distance, availability);
         holder.stationDetail.setText(details);
         holder.stationName.setText(name);
+        holder.viewOnMap.setBackgroundResource(backgroundId);
         holder.viewOnMap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick (View v) {
@@ -107,10 +122,12 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
                 IMapController controller = map.getController();
-                controller.zoomTo(14, 1000L);
+                controller.zoomTo(zoom, animationDuration);
                 controller.setCenter(new GeoPoint(latitude, longitude));
             }
         });
+
+        // Set the button icon to something appropriate
     }
 
     @Override
