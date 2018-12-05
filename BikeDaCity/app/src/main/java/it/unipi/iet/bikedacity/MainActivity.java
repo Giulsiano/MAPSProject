@@ -315,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements
                 isShowingParking = savedInstanceState.getBoolean(resources.getString(R.string.pref_show_available_places));
             }
             overlayNames = BikeDaCityUtil.getOverlayNames(this);
-            showVisibleOverlaysButtonBackgroundIds = BikeDaCityUtil.getOverlayButtonDrawables();
+            showVisibleOverlaysButtonBackgroundIds = BikeDaCityUtil.getOverlayButtonDrawableIds();
         }
         else {
             BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,

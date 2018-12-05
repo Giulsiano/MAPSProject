@@ -120,7 +120,7 @@ public class BikeDaCityUtil {
         return overlayNames;
     }
 
-    public static int[] getOverlayButtonDrawables (){
+    public static int[] getOverlayButtonDrawableIds (){
         // This part is application specific, pay attention to the priority order into BikeDaCityUtil.Availability enum
         int[] backgrounds = new int[BikeDaCityUtil.Availability.values().length << 1];
         backgrounds[0] = R.drawable.ic_place_view_all_h24;
