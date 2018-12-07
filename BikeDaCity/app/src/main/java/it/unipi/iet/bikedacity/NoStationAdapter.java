@@ -18,6 +18,10 @@ public class NoStationAdapter extends RecyclerView.Adapter<NoStationAdapter.NoSt
         this.address = address;
     }
 
+    public void setAddress (String address){
+        this.address = address;
+    }
+
     @NonNull
     @Override
     public NoStationViewHolder onCreateViewHolder (@NonNull ViewGroup parent, int viewType){

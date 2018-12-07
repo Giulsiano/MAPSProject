@@ -40,9 +40,19 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
         this.isShowingParking = isShowingParking;
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         Resources resources = context.getResources();
-        zoom = (double) preferences.getFloat(resources.getString(R.string.pref_zoom),
-                Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
-                        resources.getString(R.string.default_zoom_value))));
+        zoom = (double) Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
+                                                           resources.getString(R.string.default_zoom_value)));
+    }
+
+    public void setDataSource (SortedMap<Integer, List<CityBikesStation>> distanceMap){
+        if (!(distanceMap == null || distanceMap.equals(dataSource))){
+            dataSource = distanceMap;
+            stations = createStationList();
+        }
+    }
+
+    public void setShowingParking (boolean isShowingParking){
+        this.isShowingParking = isShowingParking;
     }
 
     private class Station {

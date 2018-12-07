@@ -68,6 +68,8 @@ public class MainActivity extends AppCompatActivity implements
     private Map<BikeDaCityUtil.Availability, String> overlayNames;
     private Map<BikeDaCityUtil.Availability, Drawable> overlayDrawables;
     private int[] showVisibleOverlaysButtonBackgroundIds;
+    private NoStationAdapter noStationAdapter;
+    private ShowStationAdapter stationAdapter;
 
     private boolean permissionOk;
     private boolean isFirstFix;
@@ -236,11 +238,9 @@ public class MainActivity extends AppCompatActivity implements
                             overlayDrawables.get(availability));
                     mapManager.setOverlayVisibility(overlayNames.get(availability), true);
                 }
-
-                stationListView.setAdapter(new ShowStationAdapter(context,
-                        stationMap,
-                        mapManager.getMapView(),
-                        isShowingParking));
+                stationAdapter.setDataSource(stationMap);
+                stationAdapter.setShowingParking(isShowingParking);
+                stationListView.setAdapter(stationAdapter);
                 stationListView.invalidate();
                 visibleOverlayButton.setEnabled(true);
             }
@@ -258,7 +258,8 @@ public class MainActivity extends AppCompatActivity implements
                                 }
                             }).show();
                 }
-                stationListView.setAdapter(new NoStationAdapter(context, address));
+                noStationAdapter.setAddress(address);
+                stationListView.setAdapter(noStationAdapter);
             }
             infoBox.setText(resources.getString(R.string.infobox_current_location,
                     currentLocation.getLatitude(),
@@ -313,6 +314,9 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d(TAG, "Getting isShowingParking from savedInstanceState");
                 isShowingParking = savedInstanceState.getBoolean(resources.getString(R.string.pref_show_available_places));
             }
+
+            noStationAdapter = new NoStationAdapter(this, null);
+            stationAdapter = new ShowStationAdapter(this, null, mapManager.getMapView(), isShowingParking);
             overlayNames = BikeDaCityUtil.getOverlayNames(this);
             showVisibleOverlaysButtonBackgroundIds = BikeDaCityUtil.getOverlayButtonDrawableIds();
         }
