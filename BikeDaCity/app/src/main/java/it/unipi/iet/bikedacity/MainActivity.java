@@ -153,9 +153,8 @@ public class MainActivity extends AppCompatActivity implements
                 // There is no city found at the current location coordinates, try to get the name displayed
                 // to OSM Nominatim service
                 if (city == null) {
-                    String displayName = OSMNominatimService.getDisplayNameFrom(currentLocation.getLatitude(),
+                    address = OSMNominatimService.getDisplayNameFrom(currentLocation.getLatitude(),
                                                                                 currentLocation.getLongitude());
-                    if (displayName != null) address = displayName;
                     return null;
                 }
                 else cityBikesManager.setCity(city);
