@@ -44,8 +44,7 @@ import java.util.Map;
 import java.util.SortedMap;
 
 // TODO Fix address problem when city doesn't have any service
-// TODO Fix change drawables on the map when the menu item is selected
-// TODO Fix change background button and overlay problem
+// TODO Fix show overlay button that doesn't show the right overlays when app starts
 // TODO move to the util class some of the finisher alert dialog
 // TODO fix change location problem when goes to a city with a service to one without it
 // TODO fix zoom when application starts
@@ -434,17 +433,19 @@ public class MainActivity extends AppCompatActivity implements
         visibleOverlayCounter = preferences.getInt(
                                 resources.getString(R.string.pref_visible_overlays),
                                 Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
-                                                      resources.getString(R.string.default_view_station_value))));
-        double zoomLevel = (double) preferences.getFloat(resources.getString(R.string.pref_zoom),
-                Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
-                        resources.getString(R.string.default_zoom_value))));
+                                                      resources.getString(R.string.default_view_station_value)))
+        );
+        double zoomLevel = (double) preferences.getFloat(
+                                    resources.getString(R.string.pref_zoom),
+                                    Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
+                                                       resources.getString(R.string.default_zoom_value)))
+        );
         mapManager.setDefaultZoom(zoomLevel);
 
         // Set the background and check if the provider is available
         Button showOptionButton = findViewById(R.id.view_overlay_button);
         showOptionButton.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        Log.i(TAG, "App has the right permissions granted");
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
             requestEnablingProvider();
         }
@@ -499,7 +500,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onStop(){
         super.onStop();
-        try{
+        try {
             unregisterReceiver(locationReceiver);
         }
         catch (IllegalArgumentException e){
@@ -527,6 +528,7 @@ public class MainActivity extends AppCompatActivity implements
                     showOptionItem.setTitle(isShowingParking ?
                             resources.getString(R.string.show_free_bikes_entry) :
                             resources.getString(R.string.show_available_places_entry));
+                    overlayDrawables = BikeDaCityUtil.getOverlayDrawables(this, isShowingParking);
                     task = new BuildStationMapTask(this);
                     task.execute();
                     Button visibleOverlayButton = findViewById(R.id.view_overlay_button);
