@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-// TODO Fix address problem when city doesn't have any service
 // TODO Fix show overlay button that doesn't show the right overlays when app starts
 // TODO move to the util class some of the finisher alert dialog
 // TODO fix change location problem when goes to a city with a service to one without it
@@ -80,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final int REQUEST_PERMISSIONS = 0;
 
     private enum ProgressState {
-        REQUEST_CITY,
+        REQUEST_CITY_STATIONS,
         COMPUTING_DISTANCES,
         MAKE_STATION_LIST
     }
@@ -92,7 +91,6 @@ public class MainActivity extends AppCompatActivity implements
         Button visibleOverlayButton;
         Context context;
         SortedMap<Integer, List<CityBikesStation>> stationMap;
-        String address;
         Resources resources;
 
         public BuildStationMapTask (Context ctx){
@@ -103,8 +101,6 @@ public class MainActivity extends AppCompatActivity implements
             progressBar = findViewById(R.id.indeterminate_bar);
             this.context = ctx;
             this.resources = ctx.getResources();
-            address = this.resources.getString(R.string.address_text,
-                                               this.resources.getString(R.string.default_address_text));
         }
 
         @Override
@@ -128,8 +124,8 @@ public class MainActivity extends AppCompatActivity implements
         protected void onProgressUpdate (ProgressState... progresses){
             super.onProgressUpdate(progresses);
             switch(progresses[0]){
-                case REQUEST_CITY:
-                    infoBox.setText(resources.getString(R.string.infobox_request_city));
+                case REQUEST_CITY_STATIONS:
+                    infoBox.setText(resources.getString(R.string.infobox_request_city_stattion));
                     break;
 
                 case COMPUTING_DISTANCES:
@@ -144,27 +140,25 @@ public class MainActivity extends AppCompatActivity implements
 
         @Override
         protected Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>> doInBackground (Void... voids){
-            String city = cityBikesManager.getCity();
+            publishProgress(ProgressState.REQUEST_CITY_STATIONS);
+            String city = OSMNominatimService.getCityFrom(currentLocation.getLatitude(),
+                                                          currentLocation.getLongitude());
             if (city == null){
-                publishProgress(ProgressState.REQUEST_CITY);
-                city = OSMNominatimService.getCityFrom(currentLocation.getLatitude(),
-                        currentLocation.getLongitude());
-
-                // There is no city found at the current location coordinates, try to get the name displayed
-                // to OSM Nominatim service
-                if (city == null) {
-                    address = OSMNominatimService.getDisplayNameFrom(currentLocation.getLatitude(),
-                                                                                currentLocation.getLongitude());
-                    return null;
-                }
-                else cityBikesManager.setCity(city);
+                // No city is known to OSMNominatim service, so there is no stations to download
+                Log.w(TAG, "doInBackground: No city known at current location");
+                return null;
             }
-            // Get ordered stations
+            cityBikesManager.setCity(city);
+
+            // Get station ordered by distance
             publishProgress(ProgressState.COMPUTING_DISTANCES);
             stationMap = (isShowingParking) ? cityBikesManager.getNearestFreePlacesFrom(currentLocation) :
-                                                 cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
+                                              cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
 
-            if (stationMap == null || stationMap.size() == 0) return null;
+            if (!cityBikesManager.cityHasBikeService()) {
+                Log.w(TAG, "doInBackground: No bike service found in " + cityBikesManager.getCity());
+                return null;
+            }
 
             // Create the list of overlay which will be added to the map. stationNumber is the initial capacity
             // for the HashMap to avoid resize of the HashMap itself and for gaining some performance hopefully
@@ -226,6 +220,7 @@ public class MainActivity extends AppCompatActivity implements
             // stationList is ordered by availability, from no to high
             super.onPostExecute(availabilityMap);
             if (availabilityMap != null && availabilityMap.size() != 0){
+                noStationAlertShown = false;
                 infoBox.setText(R.string.infobox_adding_stations);
 
                 // Add markers to the map view choosing the right marker which depends on the availability
@@ -245,6 +240,7 @@ public class MainActivity extends AppCompatActivity implements
             }
             else {
                 if (!noStationAlertShown){
+                    noStationAlertShown = true;
                     // Show the problem to the user but still maitain the app active
                     BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
                             R.string.err_dialog_no_city_found_title,
@@ -253,11 +249,16 @@ public class MainActivity extends AppCompatActivity implements
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick (DialogInterface dialog, int which) {
-                                    noStationAlertShown = true;
+
                                 }
                             }).show();
                 }
-                noStationAdapter.setAddress(address);
+                String description = resources.getString(
+                                         R.string.address_description, cityBikesManager.getCity(),
+                                         OSMNominatimService.getDisplayNameFrom(currentLocation.getLatitude(),
+                                                                                currentLocation.getLongitude())
+                );
+                noStationAdapter.setDescription(description);
                 stationListView.setAdapter(noStationAdapter);
             }
             infoBox.setText(resources.getString(R.string.infobox_current_location,
