@@ -94,7 +94,8 @@
     <string name="current_location_overlay_name">Current location</string>
 
     <!-- String used by the app to signal no station has been found -->
-    <string name="address_text">Where I am:\n%1$s.</string>
+    <string name="address_text">%1$s</string>
+    <string name="address_description">Where I am: %1$s\n%2$s</string>
     <string name="no_station_found_text">No station have been found.</string>
     <string name="default_address_text">Unknown location.</string>
 
