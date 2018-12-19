@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedMap;
@@ -37,10 +36,8 @@ public class CityBikesManager {
     }
 
     public boolean cityHasBikeService() {
-        if (city != null) {
-            return stations == null || stations.size() == 0;
-        }
-        throw new NullPointerException("City is null");
+        if (city == null) return false;
+        return stations != null && stations.size() != 0;
     }
 
     public List<CityBikesStation> getStations () {
@@ -51,19 +48,20 @@ public class CityBikesManager {
         return city;
     }
 
-    public void setCity (String c) {
-        city = c;
+    public void setCity (String city) {
+        this.city = city;
     }
 
     private SortedMap<Integer, List<CityBikesStation>> getStationsOrderedByDistanceFrom (Location location){
-        Log.i(TAG, "Order stations by distance");
-        if (stations == null){
-            Log.d(TAG, "Station object is null. Downloading stations");
-            stations = downloader.getStationsOf(city);
-        }
-        int distance;
         // Use a TreeMap that implements SortedMap interface to automatically obtain an ordered map
         TreeMap<Integer, List<CityBikesStation>> distanceMap = new TreeMap<>();
+        Log.i(TAG, "Order stations by distance");
+        if (city == null){
+            Log.w(TAG, "getStationsOrderedByDistanceFrom: City has not been set.");
+            return distanceMap;
+        }
+        stations = downloader.getStationsOf(city);
+        int distance;
         for (CityBikesStation station : stations){
             distance = Math.round(location.distanceTo(station.getLocation()));
             if (distanceMap.containsKey(distance)){
@@ -93,15 +91,10 @@ public class CityBikesManager {
             Log.e(TAG, "Location passed is null");
             return null;
         }
-        if (city == null){
-            Log.e(TAG, "City passed is null");
-            return null;
-        }
         // Order the station by their free place availability
         SortedMap<Integer, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
         Log.i(TAG,"Ordering the list of stations by availability");
-        for (Iterator<Integer> it = distanceMap.keySet().iterator(); it.hasNext();){
-            Integer distance = it.next();
+        for (Integer distance : distanceMap.keySet()){
             List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.FreePlaceComparator);
         }
@@ -114,15 +107,10 @@ public class CityBikesManager {
             Log.e(TAG, "Location passed is null");
             return null;
         }
-        if (city == null){
-            Log.e(TAG, "City passed is null");
-            return null;
-        }
         // Order the station by their free place availability
         SortedMap<Integer, List<CityBikesStation>> distanceMap = getStationsOrderedByDistanceFrom(location);
         Log.i(TAG,"Ordering the list of stations by availability");
-        for (Iterator<Integer> it = distanceMap.keySet().iterator(); it.hasNext();){
-            Integer distance = it.next();
+        for (Integer distance : distanceMap.keySet()){
             List<CityBikesStation> stations = distanceMap.get(distance);
             Collections.sort(stations, CityBikesStation.AvailableBikesComparator);
         }
@@ -219,7 +207,10 @@ public class CityBikesManager {
          */
         public List<CityBikesStation> getStationsOf (String city) {
             List<CityBikesStation> stations = new LinkedList<>();
-            if ("".equals(city) || city == null) return stations;
+            if ("".equals(city) || city == null) {
+                Log.w(TAG, "getStationsOf: City is null or empty");
+                return stations;
+            }
             String networkEndpoint = null;
             JSONArray networks = getNetworks();
             if (networks == null){
