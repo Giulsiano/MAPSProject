@@ -136,8 +136,6 @@ public class ShowStationAdapter extends RecyclerView.Adapter<ShowStationAdapter.
                 controller.setCenter(new GeoPoint(latitude, longitude));
             }
         });
-
-        // Set the button icon to something appropriate
     }
 
     @Override
