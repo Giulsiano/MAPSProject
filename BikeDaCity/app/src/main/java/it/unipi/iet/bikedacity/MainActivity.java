@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements
     private CityBikesManager cityBikesManager;
     private Location currentLocation;
     private RecyclerView stationListView;
-    private TextView infoBox;
     private MenuItem showOptionItem;
     private LocationBroadcastReceiver locationReceiver;
     private PendingIntent pendingIntent;
@@ -88,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements
         ProgressBar progressBar;
         TextView infoBox;
         Button refreshMap;
-        Button visibleOverlayButton;
+        Button changeVisibleOverlayButton;
         Context context;
         SortedMap<Integer, List<CityBikesStation>> stationMap;
         Resources resources;
@@ -96,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements
         public BuildStationMapTask (Context ctx){
             super();
             refreshMap = findViewById(R.id.refresh_map_button);
-            visibleOverlayButton = findViewById(R.id.view_overlay_button);
+            changeVisibleOverlayButton = findViewById(R.id.view_overlay_button);
             infoBox = findViewById(R.id.infoBox);
             progressBar = findViewById(R.id.indeterminate_bar);
             this.context = ctx;
@@ -110,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements
 
             // Disable everything can make the app explodes if another instance of this task is running
             refreshMap.setEnabled(false);
-            visibleOverlayButton.setEnabled(false);
+            changeVisibleOverlayButton.setEnabled(false);
             infoBox.setText(R.string.infobox_starting_text);
 
             String myPositionOverlayName = resources.getString(R.string.current_location_overlay_name);
@@ -125,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements
             super.onProgressUpdate(progresses);
             switch(progresses[0]){
                 case REQUEST_CITY_STATIONS:
-                    infoBox.setText(resources.getString(R.string.infobox_request_city_stattion));
+                    infoBox.setText(resources.getString(R.string.infobox_request_city_station));
                     break;
 
                 case COMPUTING_DISTANCES:
@@ -230,13 +229,13 @@ public class MainActivity extends AppCompatActivity implements
                     mapManager.replaceAllMarkersOn(overlayNames.get(availability),
                             availabilityMap.get(availability),
                             overlayDrawables.get(availability));
-                    mapManager.setOverlayVisibility(overlayNames.get(availability), true);
                 }
+                mapManager.setVisibleOverlays(getVisibleOverlayByAvailability(visibleOverlayCounter));
                 stationAdapter.setDataSource(stationMap);
                 stationAdapter.setShowingParking(isShowingParking);
                 stationListView.setAdapter(stationAdapter);
                 stationListView.invalidate();
-                visibleOverlayButton.setEnabled(true);
+                changeVisibleOverlayButton.setEnabled(true);
             }
             else {
                 if (!noStationAlertShown){
@@ -292,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements
             Configuration.getInstance().load(getApplicationContext(), preferences);
             setContentView(R.layout.activity_main);
             resources = getResources();
-            infoBox = findViewById(R.id.infoBox);
+            TextView infoBox = findViewById(R.id.infoBox);
             infoBox.setText(R.string.infobox_init_app);
             locationReceiver = new LocationBroadcastReceiver();
             pendingIntent = createPendingIntent();
@@ -434,16 +433,9 @@ public class MainActivity extends AppCompatActivity implements
         overlayDrawables = BikeDaCityUtil.getOverlayDrawables(this, isShowingParking);
 
         // Get values saved into onPause(), if they don't exist take values from preferences
-        visibleOverlayCounter = preferences.getInt(
-                                resources.getString(R.string.pref_visible_overlays),
-                                Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
-                                                      resources.getString(R.string.default_view_station_value)))
-        );
-        double zoomLevel = (double) preferences.getFloat(
-                                    resources.getString(R.string.pref_zoom),
-                                    Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key),
-                                                       resources.getString(R.string.default_zoom_value)))
-        );
+        visibleOverlayCounter = Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
+                                                      resources.getString(R.string.default_view_station_value)));
+        double zoomLevel = (double) Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key), resources.getString(R.string.default_zoom_value)));
         mapManager.setDefaultZoom(zoomLevel);
 
         // Set the background and check if the provider is available
@@ -558,8 +550,14 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void addVisibleOverlay (View v){
-        List<String> nameList = new LinkedList<>();
         visibleOverlayCounter = (++visibleOverlayCounter) % overlayNames.size();
+        List<String> nameList = getVisibleOverlayByAvailability(visibleOverlayCounter);
+        mapManager.setVisibleOverlays(nameList);
+        v.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
+    }
+
+    private List<String> getVisibleOverlayByAvailability(int counter){
+        List<String> nameList = new LinkedList<>();
         BikeDaCityUtil.Availability[] knownOverlays = BikeDaCityUtil.Availability.values();
 
         // Set from higher to lower priority depending on the number of tap the user does
@@ -567,10 +565,8 @@ public class MainActivity extends AppCompatActivity implements
             nameList.add(overlayNames.get(knownOverlays[i]));
         }
         nameList.add(resources.getString(R.string.current_location_overlay_name));
-        mapManager.setVisibleOverlays(nameList);
-        v.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
+        return nameList;
     }
-
 
     public class LocationBroadcastReceiver extends BroadcastReceiver {
 

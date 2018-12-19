@@ -80,7 +80,7 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/station_list"
         android:layout_width="383dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/map"
         app:layout_constraintTop_toBottomOf="@+id/my_location_button" />

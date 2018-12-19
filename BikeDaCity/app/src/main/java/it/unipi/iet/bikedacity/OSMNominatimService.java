@@ -54,15 +54,19 @@ public class OSMNominatimService {
      */
     public static String getCityFrom (double latitude, double longitude){
         String city = null;
-        if (hasChangedCoordinates(latitude, longitude)){
+        if (response == null){
+            Log.i(TAG, "Reverse geocoding for (" + latitude + ", " + longitude +")");
+            response = getResponseFor(latitude, longitude);
+        }
+        else if (hasChangedCoordinates(latitude, longitude)){
             Log.i(TAG, "getCityFrom: Coordinate has changed. Request new position");
             previousCoordinates[0] = latitude;
             previousCoordinates[1] = longitude;
+            Log.i(TAG, "Reverse geocoding for (" + latitude + ", " + longitude +")");
             response = getResponseFor(latitude, longitude);
-            if (response == null) return city;
+            if (response == null) return null;
         }
 
-        Log.i(TAG, "Reverse geocoding for (" + latitude + ", " + longitude +")");
         try {
             JSONObject address = response.getJSONObject("address");
             for (String fieldName : fieldNames){
