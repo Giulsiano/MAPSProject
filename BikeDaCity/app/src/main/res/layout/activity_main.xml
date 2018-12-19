@@ -77,12 +77,28 @@
         app:layout_constraintStart_toEndOf="@+id/my_location_button"
         app:layout_constraintTop_toBottomOf="@+id/map" />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/station_list"
-        android:layout_width="383dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/map"
-        app:layout_constraintTop_toBottomOf="@+id/my_location_button" />
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/my_location_button">
+
+        <android.support.v4.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/station_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/map"
+                app:layout_constraintTop_toBottomOf="@+id/my_location_button" />
+
+        </android.support.v4.widget.NestedScrollView>
+
+    </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>
