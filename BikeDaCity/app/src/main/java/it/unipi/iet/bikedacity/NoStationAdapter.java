@@ -11,15 +11,18 @@ import android.widget.TextView;
 
 public class NoStationAdapter extends RecyclerView.Adapter<NoStationAdapter.NoStationViewHolder>{
     private Context context;
-    private String address;
+    private String description;
 
-    public NoStationAdapter (Context context, String address){
+    public NoStationAdapter (Context context, String description){
         this.context = context;
-        this.address = address;
+
+        setDescription(description);
     }
 
-    public void setAddress (String address){
-        this.address = address;
+    public void setDescription (String description){
+        Resources resources = context.getResources();
+        this.description = (description == null) ? resources.getString(R.string.default_address_text) :
+                                                   description;
     }
 
     @NonNull
@@ -33,7 +36,7 @@ public class NoStationAdapter extends RecyclerView.Adapter<NoStationAdapter.NoSt
     @Override
     public void onBindViewHolder (@NonNull NoStationViewHolder holder, int position){
         Resources resources = context.getResources();
-        String address = resources.getString(R.string.address_text, this.address);
+        String address = resources.getString(R.string.address_text, this.description);
         holder.addressInfo.setText(address);
     }
 
