@@ -61,7 +61,7 @@
 
     <!-- Information box texts -->
     <string name="infobox_init_app">Initializing application&#8230;</string>
-    <string name="infobox_request_city">Finding city&#8230;</string>
+    <string name="infobox_request_city_station">Finding city\'s bike services&#8230;</string>
     <string name="infobox_station_ordered">Computing station distances&#8230;</string>
     <string name="infobox_starting_text">Initializing map&#8230;</string>
     <string name="infobox_adding_stations">Adding stations to the map&#8230;</string>
@@ -75,7 +75,7 @@
 
     <!-- Station list contents -->
     <string name="station_list_distance">Distance: %1$d m</string>
-    <string name="station_list_availability">Availablity: %1$d %2$s</string>
+    <string name="station_list_availability">Availability: %1$d %2$s</string>
     <string name="station_list_details">%1$s  %2$s</string>
     <string name="station_list_free_places">slots</string>
     <string name="station_list_free_bikes">bikes</string>
