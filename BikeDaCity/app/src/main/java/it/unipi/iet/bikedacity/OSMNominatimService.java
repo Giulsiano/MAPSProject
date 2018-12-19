@@ -20,6 +20,9 @@ public class OSMNominatimService {
     private static final String[] fieldNames = {"city", "town", "village"};
     private static final String displayNameField = "display_name";
     private static JSONObject response;
+    // latitude then longitude
+    private static double[] previousCoordinates = {0.0, 0.0};
+
 
     private static JSONObject getResponseFor (double latitude, double longitude){
         JSONObject response = null;
@@ -38,6 +41,10 @@ public class OSMNominatimService {
         return response;
     }
 
+    private static boolean hasChangedCoordinates(double latitude, double longitude){
+        return previousCoordinates[0] != latitude || previousCoordinates[1] != longitude;
+    }
+
     /**
      * This method requests the name of a city based on the latitude and logitude passed by parameter
      * @param latitude  Latitude of the city you want
@@ -47,12 +54,17 @@ public class OSMNominatimService {
      */
     public static String getCityFrom (double latitude, double longitude){
         String city = null;
-        if (response == null || response.length() == 0){
+        if (hasChangedCoordinates(latitude, longitude)){
+            Log.i(TAG, "getCityFrom: Coordinate has changed. Request new position");
+            previousCoordinates[0] = latitude;
+            previousCoordinates[1] = longitude;
             response = getResponseFor(latitude, longitude);
+            if (response == null) return city;
         }
+
         Log.i(TAG, "Reverse geocoding for (" + latitude + ", " + longitude +")");
         try {
-            JSONObject address = getResponseFor(latitude, longitude).getJSONObject("address");
+            JSONObject address = response.getJSONObject("address");
             for (String fieldName : fieldNames){
                 if (address.has(fieldName)) {
                     city = address.getString(fieldName);
