@@ -1,5 +1,6 @@
 package it.unipi.iet.bikedacity;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -12,6 +13,8 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class BikeDaCityUtil {
+    public static String[] permissionsNeeded = {Manifest.permission.ACCESS_FINE_LOCATION,
+                                                Manifest.permission.WRITE_EXTERNAL_STORAGE};
     public static AlertDialog createAlertDialogWithPositiveButtonOnly (Context context,
                                                                        int titleId,
                                                            int messageId,
@@ -40,7 +43,8 @@ public class BikeDaCityUtil {
     }
 
     public static AlertDialog getPermissionsRationaleDialog (final Activity activity,
-                                                             final String[] permissions){
+                                                             final String[] permissions,
+                                                             final int requestCode){
         return BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(activity,
                 R.string.perm_dialog_title,
                 R.string.perm_dialog_message,
@@ -48,7 +52,7 @@ public class BikeDaCityUtil {
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick (DialogInterface dialog, int which) {
-                        ActivityCompat.requestPermissions(activity, permissions, 0);
+                        ActivityCompat.requestPermissions(activity, permissions, requestCode);
                     }
                 });
     }

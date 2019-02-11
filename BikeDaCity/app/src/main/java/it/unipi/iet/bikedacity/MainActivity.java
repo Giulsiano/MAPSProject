@@ -1,6 +1,5 @@
 package it.unipi.iet.bikedacity;
 
-import android.Manifest;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -359,10 +358,14 @@ public class MainActivity extends AppCompatActivity implements
         if (requestCode == REQUEST_PERMISSIONS) {
             if (grantResults.length == 2 && grantResults[0] == PackageManager.PERMISSION_GRANTED
                                          && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                // Camera permission has been granted, preview can be displayed
+                // All permissions needed have been granted so we can register
                 this.permissionOk = true;
+                registerLocationReceiver();
             }
             else {
+
+//             BikeDaCityUtil.getPermissionsRationaleDialog(this, BikeDaCityUtil.permissionsNeeded).show();
+
                 BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
                         R.string.err_dialog_perm_not_granted_title,
                         R.string.err_dialog_perm_not_granted_message,
@@ -400,20 +403,18 @@ public class MainActivity extends AppCompatActivity implements
     public void onStart (){
         super.onStart();
         // Request permission for this app to work properly
-        permissionOk = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        permissionOk = ActivityCompat.checkSelfPermission(this, BikeDaCityUtil.permissionsNeeded[0])
                 == PackageManager.PERMISSION_GRANTED;
-        permissionOk &= ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        permissionOk &= ActivityCompat.checkSelfPermission(this, BikeDaCityUtil.permissionsNeeded[1])
                 == PackageManager.PERMISSION_GRANTED;
         if (!permissionOk) {
             Log.i(TAG, "Request permissions to the user");
-            BikeDaCityUtil.getPermissionsRationaleDialog(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE}).show();
+            BikeDaCityUtil.getPermissionsRationaleDialog(this, BikeDaCityUtil.permissionsNeeded, REQUEST_CODE).show();
         }
     }
 
-    private void requestEnablingProvider (){
-        Log.w(TAG, "Request the user to enable the GPS provider");
+    private void requestEnableGPS (){
+        Log.d(TAG, "Request the user to enable the GPS provider");
         BikeDaCityUtil.createAlertDialogWithTwoButton(this,
                 R.string.enable_provider_title,
                 R.string.enable_provider_message,
@@ -434,6 +435,41 @@ public class MainActivity extends AppCompatActivity implements
         ).show();
     }
 
+    private void registerLocationReceiver(){
+        registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
+        String minTimePreference = preferences.getString(resources.getString(R.string.location_interval_list_key),
+                                                         resources.getString(R.string.default_pref_location_value)
+                                                        );
+        int minTime = Integer.parseInt(minTimePreference);
+        try {
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            if (minTime == 0){
+                locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
+            }
+            else {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, 0,
+                        pendingIntent);
+            }
+            String counter = preferences.getString(resources.getString(R.string.default_view_station_key),
+                    resources.getString(R.string.default_view_station_value));
+            visibleOverlayCounter = Integer.parseInt(counter);
+            isFirstFix = true;
+        }
+        catch (SecurityException e){
+            BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
+                    R.string.err_dialog_perm_not_granted_title,
+                    R.string.err_dialog_perm_not_granted_message,
+                    R.string.err_dialog_perm_not_granted_button,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick (DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    }
+            ).show();
+        }
+    }
+
     @Override
     public void onResume (){
         super.onResume();
@@ -446,44 +482,16 @@ public class MainActivity extends AppCompatActivity implements
         double zoomLevel = (double) Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key), resources.getString(R.string.default_zoom_value)));
         mapManager.setDefaultZoom(zoomLevel);
 
-        // Set the background and check if the provider is available
+        // Set the background of the view overlay button and check if the provider is available
         Button showOptionButton = findViewById(R.id.view_overlay_button);
         showOptionButton.setBackgroundResource(getShowOptionButtonBackground(visibleOverlayCounter));
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            requestEnablingProvider();
+            requestEnableGPS();
         }
         else {
-            registerReceiver(locationReceiver, new IntentFilter(CHANGE_LOCATION_ACTION));
-            String minTimePreference =
-                    preferences.getString(resources.getString(R.string.location_interval_list_key),
-                            resources.getString(R.string.default_pref_location_value));
-            int minTime = Integer.parseInt(minTimePreference);
-            try {
-                if (minTime == 0){
-                    locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, pendingIntent);
-                }
-                else {
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, 0,
-                            pendingIntent);
-                }
-                String counter = preferences.getString(resources.getString(R.string.default_view_station_key),
-                        resources.getString(R.string.default_view_station_value));
-                visibleOverlayCounter = Integer.parseInt(counter);
-                isFirstFix = true;
-            }
-            catch (SecurityException e){
-                BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(this,
-                        R.string.err_dialog_perm_not_granted_title,
-                        R.string.err_dialog_perm_not_granted_message,
-                        R.string.err_dialog_perm_not_granted_button,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick (DialogInterface dialog, int which) {
-                                finish();
-                            }
-                        }
-                ).show();
+            if (this.permissionOk){
+                registerLocationReceiver();
             }
         }
     }
