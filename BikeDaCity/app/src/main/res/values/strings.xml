@@ -93,10 +93,14 @@
     <string name="high_availability_overlay_name">High availability</string>
     <string name="current_location_overlay_name">Current location</string>
 
-    <!-- String used by the app to signal no station has been found -->
+    <!-- Strings used by the app to signal no station has been found -->
     <string name="address_text">%1$s</string>
     <string name="address_description">Where I am: %1$s\n%2$s</string>
     <string name="no_station_found_text">No station have been found.</string>
     <string name="default_address_text">Unknown location.</string>
 
+    <!-- String that signals citybikes server is not running properly or there is a connecion problem -->
+    <string name="no_connection_description">Can\'t connect to the server to download station list</string>
+    <string name="no_connection_title">Connection error</string>
+    <string name="no_connection_button_text">Ok</string>
 </resources>
