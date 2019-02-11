@@ -43,10 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-// TODO Fix show overlay button that doesn't show the right overlays when app starts
-// TODO move to the util class some of the finisher alert dialog
-// TODO fix change location problem when goes to a city with a service to one without it
-// TODO fix zoom when application starts
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -83,14 +79,16 @@ public class MainActivity extends AppCompatActivity implements
         MAKE_STATION_LIST
     }
     
-    private class BuildStationMapTask extends AsyncTask<Void, ProgressState, Map<BikeDaCityUtil.Availability, Map<CityBikesStation, String>>> {
-        ProgressBar progressBar;
-        TextView infoBox;
-        Button refreshMap;
-        Button changeVisibleOverlayButton;
-        Context context;
-        SortedMap<Integer, List<CityBikesStation>> stationMap;
-        Resources resources;
+    private class BuildStationMapTask extends AsyncTask<Void, ProgressState, Map<BikeDaCityUtil.Availability,
+                                                        Map<CityBikesStation, String>>> {
+        private ProgressBar progressBar;
+        private TextView infoBox;
+        private Button refreshMap;
+        private Button changeVisibleOverlayButton;
+        private Context context;
+        private SortedMap<Integer, List<CityBikesStation>> stationMap;
+        private Resources resources;
+        private boolean connectionSuccessful;
 
         public BuildStationMapTask (Context ctx){
             super();
@@ -100,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements
             progressBar = findViewById(R.id.indeterminate_bar);
             this.context = ctx;
             this.resources = ctx.getResources();
+            connectionSuccessful = false;
         }
 
         @Override
@@ -153,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements
             publishProgress(ProgressState.COMPUTING_DISTANCES);
             stationMap = (isShowingParking) ? cityBikesManager.getNearestFreePlacesFrom(currentLocation) :
                                               cityBikesManager.getNearestAvailableBikesFrom(currentLocation);
-
+            connectionSuccessful = cityBikesManager.getConnectionStatus() < 300;
             if (!cityBikesManager.cityHasBikeService()) {
                 Log.w(TAG, "doInBackground: No bike service found in " + cityBikesManager.getCity());
                 return null;
@@ -238,25 +237,35 @@ public class MainActivity extends AppCompatActivity implements
                 changeVisibleOverlayButton.setEnabled(true);
             }
             else {
+                int titleId, textId, buttonTextId;
+                String description;
+                if (!connectionSuccessful){
+                    titleId = R.string.no_connection_title;
+                    textId = R.string.no_connection_description;
+                    buttonTextId = R.string.no_connection_button_text;
+                    description = resources.getString(R.string.no_connection_description);
+                }
+                else {
+                    titleId = R.string.err_dialog_no_city_found_title;
+                    textId = R.string.err_dialog_no_city_found_message;
+                    buttonTextId = R.string.err_dialog_no_city_found_button;
+                    description = resources.getString(
+                                    R.string.address_description, cityBikesManager.getCity(),
+                                    OSMNominatimService.getDisplayNameFrom(currentLocation.getLatitude(),
+                                            currentLocation.getLongitude())
+                            );
+                }
                 if (!noStationAlertShown){
                     noStationAlertShown = true;
                     // Show the problem to the user but still maitain the app active
                     BikeDaCityUtil.createAlertDialogWithPositiveButtonOnly(context,
-                            R.string.err_dialog_no_city_found_title,
-                            R.string.err_dialog_no_city_found_message,
-                            R.string.err_dialog_no_city_found_button,
+                            titleId, textId, buttonTextId,
                             new DialogInterface.OnClickListener() {
                                 @Override
-                                public void onClick (DialogInterface dialog, int which) {
-
-                                }
+                                public void onClick (DialogInterface dialog, int which) {}
                             }).show();
                 }
-                String description = resources.getString(
-                                         R.string.address_description, cityBikesManager.getCity(),
-                                         OSMNominatimService.getDisplayNameFrom(currentLocation.getLatitude(),
-                                                                                currentLocation.getLongitude())
-                );
+                // Show in the RecyclerView the current address from OSMNominatim service
                 noStationAdapter.setDescription(description);
                 stationListView.setAdapter(noStationAdapter);
             }
@@ -307,7 +316,6 @@ public class MainActivity extends AppCompatActivity implements
                 String defaultView = preferences.getString(resources.getString(R.string.default_view_list_key),
                                                            resources.getString(R.string.default_pref_view_value));
                 isShowingParking = defaultView.equals(resources.getString(R.string.default_pref_view_value));
-
             }
             else {
                 Log.d(TAG, "Getting isShowingParking from savedInstanceState");
@@ -432,7 +440,7 @@ public class MainActivity extends AppCompatActivity implements
         mapManager.onResume();
         overlayDrawables = BikeDaCityUtil.getOverlayDrawables(this, isShowingParking);
 
-        // Get values saved into onPause(), if they don't exist take values from preferences
+        // Take values from preferences
         visibleOverlayCounter = Integer.parseInt(preferences.getString(resources.getString(R.string.default_view_station_key),
                                                       resources.getString(R.string.default_view_station_value)));
         double zoomLevel = (double) Float.parseFloat(preferences.getString(resources.getString(R.string.zoom_list_key), resources.getString(R.string.default_zoom_value)));
@@ -478,7 +486,6 @@ public class MainActivity extends AppCompatActivity implements
                 ).show();
             }
         }
-
     }
 
     @Override

@@ -40,6 +40,10 @@ public class CityBikesManager {
         return stations != null && stations.size() != 0;
     }
 
+    public int getConnectionStatus(){
+        return downloader.getLastConnectionStatus();
+    }
+
     public List<CityBikesStation> getStations () {
         return stations;
     }
@@ -122,8 +126,10 @@ public class CityBikesManager {
         public static final String CITYBIKESAPIURL = "https://api.citybik.es";
         public static final String NETWORKSENDPOINT = "/v2/networks/";
         private JSONArray jsonNetworks;
+        private int lastConnectionStatus;
 
         public CityBikesDownloader(){
+            lastConnectionStatus = 0;
         }
 
         /**
@@ -144,9 +150,9 @@ public class CityBikesManager {
                 HttpsURLConnection connection = (HttpsURLConnection) site.openConnection();
                 connection.setRequestMethod("GET");
                 connection.connect();
-                int status = connection.getResponseCode();
-                Log.d(TAG, "status is : " + status);
-                if (status >= 200 && status < 300){
+                lastConnectionStatus = connection.getResponseCode();
+                Log.d(TAG, "Connection status is : " + lastConnectionStatus);
+                if (lastConnectionStatus >= 200 && lastConnectionStatus < 300){
                     Log.i(TAG, "Received response from the site: OK");
                     try (InputStreamReader is = new InputStreamReader(connection.getInputStream())){
                         BufferedReader reader = new BufferedReader(is);
@@ -157,14 +163,14 @@ public class CityBikesManager {
                         reader.close();
                     }
                 }
-                else if (status >= 300 && status < 400){
-                    Log.i(TAG, "Received response from the site, status code: " + status);
+                else if (lastConnectionStatus >= 300 && lastConnectionStatus < 400){
+                    Log.i(TAG, "Received response from the site, lastConnectionStatus code: " + lastConnectionStatus);
                 }
-                else if (status >= 400 && status < 500){
-                    Log.e(TAG, "Error in request, status code: " + status);
+                else if (lastConnectionStatus >= 400 && lastConnectionStatus < 500){
+                    Log.e(TAG, "Error in request, lastConnectionStatus code: " + lastConnectionStatus);
                 }
-                else if (status >= 500){
-                    Log.e(TAG, "Server error, status code: " + status);
+                else if (lastConnectionStatus >= 500){
+                    Log.e(TAG, "Server error, lastConnectionStatus code: " + lastConnectionStatus);
                 }
                 connection.disconnect();
             }
@@ -177,6 +183,10 @@ public class CityBikesManager {
                         .getMessage());
             }
             return content.toString();
+        }
+
+        private int getLastConnectionStatus (){
+            return lastConnectionStatus;
         }
 
         /**
