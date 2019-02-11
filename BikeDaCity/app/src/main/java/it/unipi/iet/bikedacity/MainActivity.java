@@ -498,11 +498,6 @@ public class MainActivity extends AppCompatActivity implements
         editor.putInt(resources.getString(R.string.pref_visible_overlays), visibleOverlayCounter);
         editor.putFloat(resources.getString(R.string.pref_zoom), (float) mapManager.getCurrentZoomLevel());
         editor.apply();
-    }
-
-    @Override
-    public void onStop(){
-        super.onStop();
         try {
             unregisterReceiver(locationReceiver);
         }
@@ -568,7 +563,7 @@ public class MainActivity extends AppCompatActivity implements
         BikeDaCityUtil.Availability[] knownOverlays = BikeDaCityUtil.Availability.values();
 
         // Set from higher to lower priority depending on the number of tap the user does
-        for (int i = knownOverlays.length - 1; i >= visibleOverlayCounter; --i){
+        for (int i = knownOverlays.length - 1; i >= counter; --i){
             nameList.add(overlayNames.get(knownOverlays[i]));
         }
         nameList.add(resources.getString(R.string.current_location_overlay_name));
