@@ -14,7 +14,6 @@ import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.OverlayItem;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -25,7 +24,6 @@ public class OSMapManager{
     private static final String MY_POSITION_TITLE = "I'm here!";
     public static final long DEFAULT_ANIMATION_DURATION = 500L;
     public static double DEFAULT_ZOOM = 18.0;
-    public static final String MY_POSITION_OVERLAY_NAME = "myPosition";
 
     private String myPositionTitle;
     private MapView map;
@@ -83,10 +81,6 @@ public class OSMapManager{
         return map.getZoomLevelDouble();
     }
 
-    public double getDefaultZoom (){
-        return DEFAULT_ZOOM;
-    }
-
     public MapView getMapView () {
         return map;
     }
@@ -97,14 +91,6 @@ public class OSMapManager{
 
     public void onResume (){
         map.onResume();
-    }
-
-    public void removeOverlay (String overlayName){
-        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
-        if (overlay != null) {
-            overlayMap.remove(overlayName);
-            map.getOverlays().remove(overlay);
-        }
     }
 
     public void setOverlayVisibility (String overlayName, boolean isVisible){
@@ -118,17 +104,6 @@ public class OSMapManager{
             if (isVisible) overlayList.add(overlay);
         }
         map.invalidate();
-    }
-
-
-    /**
-     * Add a my position marker to the default "myPosition" overlay. The title of the item created is
-     * MY_POSITION_TITLE while the description is a String that shows current latitude and longitude.
-     * @param location where put the marker on the map
-     * @param marker the icon which will be shown on the map
-     */
-    public void addMyPositionMarker (Location location, Drawable marker){
-        addMyPositionMarkerOn(MY_POSITION_OVERLAY_NAME, location, marker);
     }
 
     public void addMyPositionMarkerOn (String overlayName, Location location, Drawable marker){
@@ -204,27 +179,6 @@ public class OSMapManager{
         }
     }
 
-    public void replaceMyPositionMarker (Location location, Drawable marker){
-        removeMyPositionMarkerOn(MY_POSITION_OVERLAY_NAME);
-        addMyPositionMarkerOn(MY_POSITION_OVERLAY_NAME, location, marker);
-    }
-
-    public void removeMarkersOn (String overlayName, Iterable<CityBikesStation> stations){
-        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
-        if (overlay == null || overlay.size() == 0)
-            return;
-
-        Iterator<CityBikesStation> stationIt = stations.iterator();
-        List<OverlayItem> displayedItems = overlay.getDisplayedItems();
-        if (stationIt.hasNext()){
-            for (OverlayItem item : displayedItems){
-                if (item.getTitle().equals(stationIt.next().getName())){
-                    displayedItems.remove(item);
-                }
-            }
-        }
-    }
-
     public void replaceAllMarkersOn (String overlayName, Map<CityBikesStation, String> newStations,
                                    Drawable newMarker){
         removeAllMarkersOn(overlayName);
@@ -235,19 +189,6 @@ public class OSMapManager{
         ItemizedIconOverlay overlay = overlayMap.get(overlayName);
         if (overlay != null) {
             overlay.removeAllItems();
-        }
-    }
-
-    public void removeMarkerOn (String overlayName, CityBikesStation station){
-        ItemizedIconOverlay<OverlayItem> overlay = overlayMap.get(overlayName);
-        if (overlay == null || overlay.size() == 0){
-            return;
-        }
-        List<OverlayItem> displayedItems = overlay.getDisplayedItems();
-        for (OverlayItem item : displayedItems){
-            if (item.getTitle().equals(station.getName())){
-                displayedItems.remove(item);
-            }
         }
     }
     
@@ -266,9 +207,5 @@ public class OSMapManager{
 
         for (String overlayName : names)
             setOverlayVisibility(overlayName, true);
-    }
-
-    public void setMyPositionOverlayVisibility (boolean isVisible){
-        setOverlayVisibility(MY_POSITION_OVERLAY_NAME, isVisible);
     }
 }
